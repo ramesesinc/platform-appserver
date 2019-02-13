@@ -1,0 +1,7 @@
+<schema>
+    <element tablename="sampler" >
+        <field name="lob_objid" primary="true" />
+        <field name="name" required="true" />
+    </element>
+</schema>
+

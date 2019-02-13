@@ -1,0 +1,20 @@
+<schema>
+    <element tablename="entityindividual" extends="entity">
+        <field name="objid" primary="true" prefix="ENT"/>
+        <field name="lastname" required="true" />
+        <field name="firstname" srequired="true"/>
+        <field name="middlename" />
+        
+        <field name="birthdate" type="date" />
+        <complex name="info" serializer="default" ref="info"/>
+        
+        <complex name="billaddress" required="true" jointype="many-to-one" ref="entity_address">
+            <key field="billaddressid" target="objid"/>
+        </complex> 
+        <complex name="ids" required="true" jointype="one-to-many" ref="id">
+            <key field="objid" target="parentid"/>
+        </complex> 
+        
+    </element>
+</schema>
+

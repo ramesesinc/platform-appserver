@@ -1,0 +1,10 @@
+<schema>
+    <element tablename="id" extends="abstractid">
+        <field name="objid" primary="true" prefix="ID"/>
+        <field name="idno" required="true"/>
+        <complex name="parent" jointype="many-to-one" ref="entityindividual"> 
+            <key field="parentid" target="objid"/>
+        </complex>
+    </element>
+</schema>
+

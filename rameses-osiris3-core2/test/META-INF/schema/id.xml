@@ -1,0 +1,11 @@
+<schema>
+    <element tablename="id">
+        <field name="objid" primary="true" prefix="ID"/>
+        <complex name="parent" ref="entityindividual" jointype="many-to-one" required="false">
+            <field name="parentid" target="objid"/>
+        </complex>
+        <field name="idtype" required="true"/>
+        <field name="idno" required="true"/>
+        <field name="dateissued" required="true" type="date"/>
+    </element>
+</schema>

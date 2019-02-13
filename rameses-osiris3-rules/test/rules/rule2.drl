@@ -1,0 +1,10 @@
+package test1;
+
+import test.SampleFact
+
+rule "rule3"
+when
+    s: SampleFact(name=="elmo")
+then
+    System.out.println( "yep this is elmo again" );
+end 

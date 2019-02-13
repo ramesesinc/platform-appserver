@@ -1,0 +1,25 @@
+<schema>
+    <element tablename="entityindividual" extends="entity">
+        <field name="objid" primary="true" prefix="AID"/>
+        <field name="firstname" required="true"/>
+        <field name="lastname" required="true"/>
+        <complex name="createdby" jointype="many-to-one" ref="sys_user" required="false">
+            <key field="createdbyid" target="objid"/>
+        </complex>
+        <complex name="ids" jointype="one-to-many" ref="id" required="true">
+            <key field="objid" target="parentid"/>
+        </complex>
+         <field name="address2" required="true"/>
+        <field name="address2" required="true"/>
+        
+        <field name="today" expr="NOW()"/>
+        <field name="fullname" expr="CONCAT(lastname,'_', firstname,'_')"/>
+        
+        <!-- inverse joins -->
+        <complex name="deleted" jointype="many-to-one" ref="entityindividual_deleted" required="false">
+            <key field="objid" target="objid"/>
+        </complex>
+        
+    </element>
+</schema>
+

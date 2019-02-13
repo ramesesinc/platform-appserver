@@ -1,0 +1,9 @@
+com.rameses.osiris3.server.JsonServlet
+com.rameses.osiris3.server.ServiceInvokerServlet
+com.rameses.osiris3.server.AsyncPollServlet
+com.rameses.osiris3.server.JsonPollServlet
+com.rameses.osiris3.server.AsyncPushServlet
+com.rameses.osiris3.server.AsyncRegisterServlet
+com.rameses.osiris3.server.AsyncResponseServlet
+com.rameses.osiris3.server.AsyncUnregisterServlet
+com.rameses.osiris3.server.AsyncTracertServlet

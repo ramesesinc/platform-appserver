@@ -1,0 +1,12 @@
+<schema>
+    <element tablename="entity_address">
+        <field name="objid" primary="true" prefix="ADD"/>
+        <field name="street" />
+        <field name="barangay_name" />
+        <complex name="barangay" jointype="many-to-one" ref="barangay" required="true">
+            <key field="barangayid" target="objid"/>
+        </complex>    
+        <field name="text" />
+    </element>
+</schema>
+

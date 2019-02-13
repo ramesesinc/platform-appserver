@@ -1,0 +1,374 @@
+   /* 
+   public static Map<AbstractSchemaView, SqlDialectModel> buildUpdateSqlModels1(EntityManagerModel entityModel, final Map data) {
+
+        final SchemaView svw = entityModel.getSchemaView();
+        //final HashSet<SchemaViewField> whereSet = new LinkedHashSet();
+        final Set<AbstractSchemaView> joinedViews = new LinkedHashSet();
+        final LinkedHashSet<String> uniqueNames = new LinkedHashSet();
+        final List<Field> vfinders = new ArrayList(); //fields used by finders
+
+        //build the finders
+        final String finderMatch = findFindersAffectedFieldPattern(entityModel, svw);
+        final String whereMatch = findWhereAffectedFieldPattern(entityModel, svw);
+        final Map<String, Field> fieldMap = new HashMap();
+
+        final String fieldMatch =  DataUtil.stringifyMapKeys(data);
+        
+        //build the where
+        final Map<AbstractSchemaView, SqlDialectModel> modelMap = new HashMap();
+        svw.findAllFields(new SchemaViewFieldFilter() {
+            public boolean accept(SchemaViewField vf) {
+                
+                String extName = vf.getExtendedName();
+                if (!uniqueNames.add(extName)) {
+                    return false;
+                }
+
+                AbstractSchemaView avw = svw;
+                if (vf.getView() != null) {
+                    avw = vf.getView();
+                }
+
+                boolean add_joined_view = false;
+                //check if you will add in list. if primary do not add bec. we should not update prim keys
+                if ( fieldMatch!=null && extName.matches(fieldMatch)) {
+                    boolean test = false;
+                    if (vf.isUpdatable()) {
+                        test = true;
+                    }
+                    if (test) {
+                        SqlDialectModel sqlModel = modelMap.get(avw);
+                        if (sqlModel == null) {
+                            sqlModel = new SqlDialectModel();
+                            //sqlModel.setSchemaView(svw);
+                            sqlModel.setAction("update");
+                            sqlModel.setTablename(avw.getElement().getTablename());
+                            sqlModel.setTablealias(avw.getElement().getName());
+                            modelMap.put(avw, sqlModel);
+                        }
+                        sqlModel = modelMap.get(avw);
+                        
+                        //check the data if it is an expression
+                        SqlDialectModel.Field sqlF = createSqlField(vf);
+                        try {
+                            Object val = DataUtil.getNestedValue(data, extName);
+                            if(val!=null && (val instanceof String)) {
+                                String t = val.toString().trim();
+                                if(t.startsWith("{") && t.endsWith("}")) {
+                                    String texpr = t.substring(1, t.length()-1);
+                                    sqlF.setExpr( texpr );
+                                    joinedViews.addAll(findJoinedViewsFromExprForUpdate( texpr, svw ));
+                                }
+                            }
+                        }
+                        catch(Exception ign){;}
+                        sqlModel.addField(sqlF);
+                        add_joined_view = true;
+                    }
+                }
+                
+                //check if in finders
+                if (extName.matches(finderMatch)) {
+                    vfinders.add(createSqlField(vf));
+                    add_joined_view = true;
+                }
+                //check if in where filters
+                if (extName.matches(whereMatch)) {
+                    add_joined_view = true;
+                }
+                //add joined view if teh field exists in field, finder or where
+                if (add_joined_view) {
+                    joinedViews.addAll(avw.getJoinPaths());
+                    fieldMap.put(vf.getExtendedName(), createSqlField(vf));
+                }
+                return false;
+            }
+        });
+
+        //before attaching the views we sort it first according to the join order
+        List<AbstractSchemaView> jvList = new ArrayList(Arrays.asList(joinedViews.toArray()));
+        Collections.sort(jvList);
+        //attach the where and finders in each sql model
+        for (SqlDialectModel sqlModel : modelMap.values()) {
+            sqlModel.setFieldMap(fieldMap);
+            sqlModel.setFinderFields(vfinders);
+            sqlModel.setWhereFilter(buildWhereFilter(entityModel));
+            sqlModel.setJoinedViews(jvList);
+            sqlModel.setSubqueries(entityModel.getSubqueries());
+        }
+        return modelMap;
+    }
+    */
+
+    /*
+    public static SqlDialectModel buildSelectSqlModel1(final EntityManagerModel entityModel) {
+        SchemaView svw = entityModel.getSchemaView();
+
+        List<Field> selectFieldList = new ArrayList();
+        List<Field> groupFieldList = null;  //there might be none
+        List<Field> orderFieldList = null;  //there might be none
+        
+        boolean includePrimary = true;
+        boolean hasGroup = false;
+        final Map<String, Field> fieldMap = new HashMap();
+        
+        String fldExpr = ValueUtil.isEmpty(entityModel.getSelectFields())?".*":entityModel.getSelectFields();
+        List<Token> fieldMatchList = SelectFieldsTokenizer.tokenize(fldExpr);
+        
+        if( !ValueUtil.isEmpty(entityModel.getGroupByExpr() )) {
+            List<Token> groupList = SelectFieldsTokenizer.tokenize(entityModel.getGroupByExpr());
+            for( Token t: groupList) {
+                t.setInGroup(true);
+                fieldMatchList.add(t);
+            }
+            includePrimary = false;
+            groupFieldList = new ArrayList();
+            hasGroup = true;
+        }
+        
+        if( !ValueUtil.isEmpty(entityModel.getOrderExpr())) {
+            List<Token> orderTokenList = SelectFieldsTokenizer.tokenize(entityModel.getOrderExpr());
+            for( Token t: orderTokenList ) {
+                t.setInOrder(true);
+                if(hasGroup) t.setInGroup(true);
+                fieldMatchList.add(t);
+            }
+            orderFieldList = new ArrayList();
+        }
+        
+        //temporary data holders
+        final Set<AbstractSchemaView> joinedViews = new LinkedHashSet();
+        
+        //put the found list here
+        List<SchemaViewField> allFields = svw.findAllFields(".*");
+        
+        
+        //loop each token until all matches passed. Each token represents a select view
+        for( Token t: fieldMatchList ) {
+            if(t.hasExpr()) {
+                //for expressed fields.
+                SqlDialectModel.Field sf = new SqlDialectModel.Field();
+                sf.setExtendedName(t.getAlias());
+                sf.setExpr( t.getExpr() );
+                if( !t.isInOrder()) {
+                    selectFieldList.add( sf );
+                }
+                else {
+                    sf.setSortDirection(t.getSortDirection());
+                    orderFieldList.add(sf);
+                }
+                if( t.isInGroup() ) {
+                    groupFieldList.add(sf);
+                }
+                findAffectedFieldPattern(correctExpr(sf.getExpr()), svw, new FindFieldFromExprHandler() {
+                    public void handle(SchemaViewField vf) {
+                        joinedViews.addAll( vf.getView().getJoinPaths() );
+                        fieldMap.put( vf.getExtendedName(), createSqlField(vf) );
+                    }
+                });        
+            }
+            else {
+                //for normal fields.
+                for( SchemaViewField vf: allFields) {
+                    String extName = vf.getExtendedName();
+                    
+                    boolean add_fld = false;
+                    boolean passNext = false;
+
+                    if( includePrimary && vf.isPrimary() && vf.isBaseField() ) {
+                        add_fld = true;
+                    }
+                    
+                    if( !t.hasExpr() && extName.equals(t.getFieldMatch()) ) {
+                        add_fld = true;
+                        passNext = true;
+                    }
+                    else if(!t.hasExpr() && extName.matches(t.getFieldMatch())) {
+                        add_fld = true;
+                    }
+                    if (add_fld) {
+                        
+                        SqlDialectModel.Field sf = createSqlField(vf);
+                        if(!t.isInOrder()) {
+                            if(!selectFieldList.contains(sf)) selectFieldList.add( sf );
+                        }
+                        else {
+                            if(!orderFieldList.contains(sf)) {
+                                sf.setSortDirection(t.getSortDirection());
+                                orderFieldList.add(sf);
+                            }
+                        }
+                        if( t.isInGroup() ) {
+                            if(!groupFieldList.contains(sf)) {
+                                groupFieldList.add(sf);
+                            }
+                        }
+                        joinedViews.addAll(vf.getView().getJoinPaths());
+                        if(!fieldMap.containsKey(extName)) {
+                            fieldMap.put(extName, sf);
+                        }
+                        if(passNext) break; //move to the next token
+                    }
+                }
+            }
+        }
+        
+        //loop on the other fields in where, order and groupBy
+        final Set<Field> vfinders = new HashSet(); //fields used by finders
+        String finderMatch = findFindersAffectedFieldPattern(entityModel, svw);
+        String whereMatch = findWhereAffectedFieldPattern(entityModel, svw);   //buildWhereFieldMatchPattern( whereList );
+        for( SchemaViewField vf: allFields) {
+            String extName = vf.getExtendedName();
+            boolean add_joined_view = false;
+            boolean add_finder = false;
+            if (finderMatch!=null && extName.matches(finderMatch)) {
+                add_finder = true;
+                add_joined_view = true;
+            }
+            //check if in where filters
+            if (whereMatch!=null && extName.matches(whereMatch)) {
+                add_joined_view = true;
+            }
+            //add joined view if teh field exists in field, finder or where
+            if (add_joined_view) {
+                SqlDialectModel.Field sf = createSqlField(vf);
+                if(add_finder) vfinders.add(sf);
+                joinedViews.addAll(vf.getView().getJoinPaths());
+                fieldMap.put(extName, sf);
+            }
+        }
+        
+        List<AbstractSchemaView> jvList = new ArrayList(Arrays.asList(joinedViews.toArray()));
+        Collections.sort(jvList);
+        
+        List<Field> finderList = new ArrayList(Arrays.asList(vfinders.toArray()));
+
+        SqlDialectModel sqlModel = new SqlDialectModel();
+        sqlModel.setAction("select");
+        sqlModel.setTablename(svw.getTablename());
+        sqlModel.setTablealias(svw.getName());
+        
+        sqlModel.setFields(selectFieldList);
+        sqlModel.setFieldMap(fieldMap);
+        sqlModel.setFinderFields(finderList);
+        sqlModel.setJoinedViews(jvList);
+        sqlModel.setWhereFilter(buildWhereFilter(entityModel));
+        List<WhereFilter> wfs = buildOrWhereList(entityModel);
+        if( wfs!=null) {
+            for(WhereFilter wf: wfs) {
+                sqlModel.addOrWhereFilter(wf);
+            }
+        }
+        sqlModel.setSubqueries(entityModel.getSubqueries());
+        sqlModel.setStart(entityModel.getStart());
+        sqlModel.setLimit(entityModel.getLimit());
+        sqlModel.setOrderFields( orderFieldList );
+        sqlModel.setGroupFields(groupFieldList);
+        return sqlModel;
+    }
+    */
+
+
+public static WhereFilter buildWhereFilter(EntityManagerModel entityModel) {
+        EntityManagerModel.WhereElement we = entityModel.getWhereElement();
+        if (we == null) {
+            return null;
+        }
+        String expr = correctExpr(entityModel.getWhereElement().getExpr());
+        return new SqlDialectModel.WhereFilter(expr);
+    }
+     
+    
+    public static List<WhereFilter> buildOrWhereList(EntityManagerModel entityModel) {
+        if( entityModel.getOrWhereList()==null || entityModel.getOrWhereList().size()<=0 ) return null;
+        List<WhereFilter> list = new ArrayList();
+        for( WhereElement we : entityModel.getOrWhereList() ) {
+            String expr = correctExpr(we.getExpr());
+            list.add( new SqlDialectModel.WhereFilter(expr));
+        }
+        return list;
+    }
+
+
+    private static interface FindFieldFromExprHandler {
+        void handle( SchemaViewField  vf );
+    }
+    
+    //finds all field matches
+    private static String findAffectedFieldPattern(String expr, SchemaView svw, FindFieldFromExprHandler h) {
+        Set<String> set = new HashSet();
+        InputStream is = null;
+        try {
+            is = new ByteArrayInputStream(expr.getBytes());
+            StreamTokenizer st = SqlExprParserUtil.createStreamTokenizer(is);
+            
+            int i = 0;
+            while ((i = st.nextToken()) != st.TT_EOF) {
+                if (i == st.TT_WORD) {
+                    String v = st.sval;
+                    SchemaViewField vf = svw.getField(v);
+                    if (vf != null) {
+                        set.add(vf.getExtendedName());
+                        if(h!=null) h.handle(vf);
+                    }
+                }
+            }
+            StringBuilder s1 = new StringBuilder();
+            i = 0;
+            for (String s : set) {
+                if (i++ > 0) {
+                    s1.append("|");
+                }
+                s1.append(s);
+            }
+            return s1.toString();
+        } catch (Exception ign) {
+            //do nothing
+            return null;
+        } finally {
+            try {
+                is.close();
+            } catch (Exception e) {;
+            }
+        }
+    }
+
+    public static String findWhereAffectedFieldPattern(EntityManagerModel entityModel, SchemaView vw) {
+        StringBuffer sb = new StringBuffer();
+        EntityManagerModel.WhereElement we = entityModel.getWhereElement();
+        if( we!=null ) {
+            sb.append( we.getExpr() );
+        }
+        if( entityModel.getOrWhereList()!=null && entityModel.getOrWhereList().size()>0) {
+            for( EntityManagerModel.WhereElement we1: entityModel.getOrWhereList() ) {
+                sb.append( we1.getExpr() );
+            }
+        }
+        if (sb.length()==0) {
+            return "";
+        }
+        return findAffectedFieldPattern(correctExpr(sb.toString()), vw, null);
+    }
+
+    public static String findFindersAffectedFieldPattern(EntityManagerModel entityModel, SchemaView vw) {
+        return DataUtil.stringifyMapKeys(entityModel.getFinders());
+    }
+
+    
+    //This is mostly used for inline expressions for field like select and update
+    private static Set<AbstractSchemaView> findJoinedViewsFromExprForUpdate( String expr, SchemaView vw ) {
+        final Set set = new LinkedHashSet();
+        findAffectedFieldPattern(correctExpr(expr), vw, new FindFieldFromExprHandler() {
+            public void handle(SchemaViewField vf) {
+                set.addAll( vf.getView().getJoinPaths() );
+            }
+        });        
+        return set;
+    }
+    
+    
+    /*
+    public static String findUpdateAffectedFieldPattern(EntityManagerModel entityModel, SchemaView vw) {
+        return findAffectedFieldPattern(entityModel.getSelectExpr(), vw);
+    }
+    */ 

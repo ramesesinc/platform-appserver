@@ -1,0 +1,74 @@
+################################################################################
+#   The default datasource config properties: 
+################################################################################
+
+################################################################################
+# (String) The SQL query that will be used to validate connections from this pool 
+# before returning them to the caller. If specified, this query does not have to 
+# return any data, it just can't throw a SQLException. The default value is null. 
+# Example values are SELECT 1(mysql), select 1 from dual(oracle), SELECT 1(MS Sql Server)
+################################################################################
+validationQuery=SELECT 1
+
+validationInterval=30000
+
+################################################################################
+# (int) The number of milliseconds to sleep between runs of the idle connection 
+# validation/cleaner thread. This value should not be set under 1 second. 
+# It dictates how often we check for idle, abandoned connections, and how often 
+# we validate idle connections. The default value is 30000 (30 seconds). 
+################################################################################
+timeBetweenEvictionRunsMillis=30000
+
+################################################################################
+# (int) The initial number of connections that are created when the pool is started. 
+# Default value is 5 
+################################################################################
+initialSize=5
+
+################################################################################
+# (int) The minimum number of established connections that should be kept in the 
+# pool at all times. The connection pool can shrink below this number if validation 
+# queries fail. Default value is derived from initialSize:5
+################################################################################
+minIdle=5
+
+################################################################################
+# (int) The minimum amount of time an object may sit idle in the pool before it 
+# is eligible for eviction. The default value is 60000 (60 seconds).
+################################################################################
+minEvictableIdleTimeMillis=60000
+
+################################################################################
+# (int) The maximum number of active connections that can be allocated from this 
+# pool at the same time. The default value is 100
+################################################################################
+maxActive=100
+
+################################################################################
+# (int) The maximum number of connections that should be kept in the pool at all
+# times. Default value is maxActive:100 Idle connections are checked periodically 
+# (if enabled) and connections that been idle for longer than minEvictableIdleTimeMillis 
+# will be released 
+################################################################################
+maxIdle=100
+
+################################################################################
+# (int) The maximum number of milliseconds that the pool will wait 
+# (when there are no available connections) for a connection to be returned before 
+# throwing an exception. Default value is 30000 (30 seconds)
+################################################################################
+maxWait=30000
+
+################################################################################
+# (int) Timeout in seconds before an abandoned(in use) connection can be removed. 
+# The default value is 300 (300 seconds). The value should be set to the longest 
+# running query your applications might have.
+################################################################################
+removeAbandonedTimeout=300
+
+################################################################################
+# below settings are fixed and cannot be overridden
+################################################################################
+removeAbandoned=true
+logAbandoned=true

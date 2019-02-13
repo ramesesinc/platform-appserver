@@ -1,0 +1,21 @@
+package rule3;
+
+import business.SampleFact;
+global com.rameses.rules.common.RuleAction actionList;
+
+
+rule "rule3"
+when
+    s: SampleFact()
+then
+    System.out.println( "3. finished daw mamam miya->"+s.getName() );
+end 
+
+rule "rule4"
+when
+    s: SampleFact()
+then
+    System.out.println( "4. additional rule added->"+s.getName() );
+    actionList.setContext( drools );
+    actionList.execute( "save", s.getName() );
+end 

@@ -1,0 +1,6 @@
+com.rameses.osiris3.script.ScriptInfoContextResource
+com.rameses.osiris3.script.InterceptorSetContextResource
+com.rameses.osiris3.data.DataAdapterServiceResource
+com.rameses.osiris3.script.task.TaskInfoSetContextResource
+com.rameses.osiris3.xconnection.XConnectionContextResource
+com.rameses.osiris3.templates.TemplateContextResource

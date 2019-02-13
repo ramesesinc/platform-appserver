@@ -1,0 +1,6 @@
+<schema>
+    <element tablename="entity_master">
+        <field name="objid" primary="true" prefix="EADDR"/>
+        <field name="mastertype" />
+    </element>
+</schema>

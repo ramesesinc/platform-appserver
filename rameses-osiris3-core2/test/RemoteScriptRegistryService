@@ -1,0 +1,29 @@
+import com.rameses.annotations.*;
+import com.rameses.osiris3.remote.*;
+
+/*********************************************************************************
+* This is used in the Remote Scripting Service. We need this as a script
+* because we want the client to be able to hook interceptors
+*********************************************************************************/
+class RemoteScriptRegistryService {
+
+    @Cache("remote-script-cache") 
+    def cache; 
+
+    @ProxyMethod 
+    public void register( String context, def infos ) {
+    	def m = [:];
+    	infos.each {
+    		m.put( it.name, it );
+    	}
+    	cache.put("remote-script:" + context, m, 99999999);
+	println "Registered " + context;
+    }
+
+    @ProxyMethod 
+    public void unregister( String context ) {
+    	cache.remove("remote-script:" + context);
+	println "unegistered " + context;
+    }
+
+}

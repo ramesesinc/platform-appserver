@@ -1,0 +1,7 @@
+<schema>
+    <element tablename="abstract_entity">
+        <field name="objid" primary="true" prefix="AID"/>
+        <field name="type" required="true"/>
+    </element>
+</schema>
+

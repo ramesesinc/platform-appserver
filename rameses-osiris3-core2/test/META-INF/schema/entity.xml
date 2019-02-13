@@ -1,0 +1,23 @@
+<schema>
+    <element tablename="entity" extends="abstract_entity">
+        <field name="objid" primary="true" prefix="AID"/>
+        <field name="name" required="true"/>
+        <field name="entityno" required="true"/>
+        <field name="state" required="true" editable="false"/>
+        <complex name="address" jointype="one-to-one" ref="entity_address" required="true">
+            <key field="address_objid" target="objid"/>
+        </complex>
+        <complex name="modifiedby" jointype="many-to-one" ref="sys_user" required="true">
+            <key field="modifiedbyid" target="objid"/>
+        </complex> 
+        <complex name="info" serializer="default"/>  
+        <field name="dtcreated" type="date"/> 
+        <field name="address_text" /> 
+        
+        <complex name="contactinfos" jointype="one-to-many" ref="contactinfo" required="true">
+            <key field="objid" target="parentid"/>
+        </complex>
+             
+    </element>
+</schema>
+

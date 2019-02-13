@@ -1,0 +1,9 @@
+<schema>
+    <element tablename="contactinfo" >
+        <field name="objid" primary="true" prefix="CTCT"/>
+        <field name="parentid" required="true"/>
+        <field name="type" required="true"/>
+        <field name="value" required="true"/>
+    </element>
+</schema>
+

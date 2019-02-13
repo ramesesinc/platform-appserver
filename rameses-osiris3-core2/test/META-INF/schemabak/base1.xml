@@ -1,0 +1,8 @@
+<schema>
+    <element tablename="base1" extends="base0">
+        <field name="objid" primary="true" prefix="ENT"/>
+        <field name="name" required="true"/>
+        <field name="pin" required="true"/>
+    </element>
+</schema>
+

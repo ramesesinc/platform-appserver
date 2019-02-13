@@ -1,0 +1,6 @@
+com.rameses.osiris3.data.DataService
+com.rameses.osiris3.script.ScriptService
+com.rameses.osiris3.script.task.TaskService
+com.rameses.osiris3.script.messaging.ScriptMessagingService
+com.rameses.osiris3.templates.TemplateService
+com.rameses.osiris3.activedb.ActiveDBService

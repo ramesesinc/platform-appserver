@@ -1,0 +1,13 @@
+<schema adapter="waterworks">
+    <element tablename="waterworks_meter">
+            <field name="objid" primary="true"  prefix="WM"/>
+            <field name="serialno" required="true" indexed="true" caption="Serial No."/>
+            <field name="brand" required="true" indexed="true" caption="Brand"/>
+            <field name="sizeid" required="true" indexed="true" caption="Size"/>
+            <field name="capacity" required="true" caption="Capacity" />
+
+            <complex name="account" jointype="many-to-one" ref="waterworks_account" required="false">
+                    <key field="currentacctid"  target="objid"/>
+            </complex>
+    </element>
+</schema>

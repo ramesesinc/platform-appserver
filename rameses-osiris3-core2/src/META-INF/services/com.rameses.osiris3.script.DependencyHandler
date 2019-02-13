@@ -1,0 +1,15 @@
+###############################################################################
+# these are attached to the ScriptService dependency injectors
+###############################################################################
+com.rameses.osiris3.script.dependency.EnvDependencyHandler
+com.rameses.osiris3.script.dependency.PersistenceContextDependencyHandler
+com.rameses.osiris3.script.dependency.ServiceDependencyHandler
+com.rameses.osiris3.script.dependency.TransactionScopeDependencyHandler
+com.rameses.osiris3.script.dependency.CacheManagerDependencyHandler
+com.rameses.osiris3.script.dependency.SqlContextDependencyHandler
+com.rameses.osiris3.script.dependency.ContextDependencyHandler
+com.rameses.osiris3.script.dependency.XConnectionDependencyHandler
+com.rameses.osiris3.script.dependency.ResourceDependencyHandler
+com.rameses.osiris3.script.dependency.ExecutionContextDependencyHandler
+com.rameses.osiris3.script.dependency.ActiveDBDependencyHandler
+com.rameses.osiris3.script.dependency.DataContextDependencyHandler

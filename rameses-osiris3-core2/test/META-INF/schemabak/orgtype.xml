@@ -1,0 +1,8 @@
+<schema>
+    <element tablename="orgtype">
+        <field name="objid" primary="true" prefix="ORGTYPE"/>
+        <field name="name" />
+        <field name="special" />
+    </element>
+</schema>
+

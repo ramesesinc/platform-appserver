@@ -1,0 +1,7 @@
+<schema>
+    <element tablename="master_entity">
+        <field name="objid" primary="true" prefix="MST"/>
+        <field name="state" />
+    </element>
+</schema>
+

@@ -1,0 +1,7 @@
+<schema>
+    <element tablename="entityindividual_deleted">
+        <field name="objid" primary="true" />
+        <field name="voided" type="boolean"/>
+    </element>
+</schema>
+

@@ -1,0 +1,9 @@
+<schema>
+    <element tablename="sys_user">
+        <field name="objid" primary="true" prefix="AID"/>
+        <field name="username" required="true"/>
+        <field name="firstname" required="true"/>
+        <field name="lastname" required="true"/>        
+    </element>
+</schema>
+

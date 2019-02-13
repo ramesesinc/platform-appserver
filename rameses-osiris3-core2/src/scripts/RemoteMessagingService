@@ -1,0 +1,22 @@
+import com.rameses.annotations.*;
+
+
+class RemoteMessagingService {
+
+    /********************************
+    * write interceptors for this
+    *********************************/
+
+    @ProxyMethod 
+    public void onMessage( def args ) {
+        if( args!=null && args.debug == true ) {
+            println "RECEIVE RemoteMessagingService.onMessage PARAMETERS:" ;
+            args.each { k,v->
+                println "   " + k + "=" + v;
+            }
+        }
+        //do nothing
+    }
+
+
+}

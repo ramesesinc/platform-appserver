@@ -1,0 +1,8 @@
+<schema>
+    <element tablename="sample">
+        <field name="objid" primary="true" prefix="SAMP"/>
+        <field name="state" required="true"/>
+        <field name="name" required="true"/>
+        <field name="title" />
+    </element>
+</schema>
