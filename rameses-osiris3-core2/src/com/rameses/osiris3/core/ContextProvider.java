@@ -96,39 +96,60 @@ public abstract class ContextProvider {
     protected  ClassLoader getClassLoader(String name) {
         URLClassLoader urc = null;
         try {
+            List<URL> urlconfs = new ArrayList(); 
+            try {
+                URL url = new URL(getRootUrl() +"/"+ name + "/modules.conf"); 
+                File file = new File( url.getFile()); 
+                if ( file.exists() && file.isDirectory() == false ) {
+                    urlconfs.add( url ); 
+                }
+            } catch(Throwable t) {
+                System.out.println("failed to load '"+ name +"/modules.conf");
+            }
+            
+            try {
+                File dir = new File( new URL(getRootUrl() +"/"+ name +"/modules.conf.d").getFile()); 
+                for (File f : dir.listFiles()) {
+                    if ( f.getName().endsWith(".conf") && f.isDirectory() == false) {
+                        urlconfs.add( f.toURI().toURL()); 
+                    } 
+                }
+            } catch(Throwable t) {
+                //do nothing 
+            }
             
             final List<URL> urlList = new ArrayList();
-            //we'll also add the modules.conf file.
-            URL uf = new URL(getRootUrl() +"/"+ name + "/modules.conf");
-            File f = new File(uf.getFile());
-            if ( f.exists() ) {
-                InputStream is = null;
-                InputStreamReader isr = null;
-                BufferedReader br = null;
-                try {
-                    is = new FileInputStream(f);
-                    isr = new InputStreamReader(is);
-                    br = new BufferedReader(isr);
-                    String s = null;
-                    while( (s=br.readLine())!=null) { 
-                        try {
-                            if ( s.trim().length()== 0 ) continue;
-                            else if ( s.startsWith("#")) continue; 
-                            else if ( !s.endsWith("/")) s += "/";
-                            
-                            s = resolveValue(s, null); 
-                            urlList.add(new URL( s ));
-                        } catch(Throwable ign){ 
-                            System.out.println("Error loading module "+ s +" caused by "+ ign.getMessage());
+            for ( URL url : urlconfs ) {
+                File f = new File( url.getFile());
+                if ( f.exists() ) {
+                    InputStream is = null;
+                    InputStreamReader isr = null;
+                    BufferedReader br = null;
+                    try {
+                        is = new FileInputStream(f);
+                        isr = new InputStreamReader(is);
+                        br = new BufferedReader(isr);
+                        String s = null;
+                        while( (s=br.readLine())!=null) { 
+                            try {
+                                if ( s.trim().length()== 0 ) continue;
+                                else if ( s.startsWith("#")) continue; 
+                                else if ( !s.endsWith("/")) s += "/";
+
+                                s = resolveValue(s, null); 
+                                urlList.add(new URL( s ));
+                            } catch(Throwable ign){ 
+                                System.out.println("Error loading module "+ s +" caused by "+ ign.getMessage());
+                            }
                         }
-                    }
-                } catch(Throwable t) {
-                    System.out.println("Error loading module "+ uf +" caused by "+ t.getMessage());
-                } finally { 
-                    try {br.close();} catch(Exception ex){;} 
-                    try {isr.close();} catch(Exception ex){;} 
-                    try {is.close();} catch(Exception ex){;} 
-                } 
+                    } catch(Throwable t) {
+                        System.out.println("Error loading module "+ url +" caused by "+ t.getMessage());
+                    } finally { 
+                        try {br.close();} catch(Exception ex){;} 
+                        try {isr.close();} catch(Exception ex){;} 
+                        try {is.close();} catch(Exception ex){;} 
+                    } 
+                }
             }
             
             //load modules directory

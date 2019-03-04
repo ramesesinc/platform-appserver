@@ -11,18 +11,15 @@ package com.rameses.osiris3.data;
 
 import com.rameses.osiris3.core.OsirisServer;
 import com.rameses.osiris3.core.ServerResource;
+import com.rameses.util.ConfigProperties;
 
 import com.rameses.util.Service;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  *
@@ -47,20 +44,22 @@ public class DsServerResource extends ServerResource {
     }
     
     public Map getDataInfo(String name) {
-        InputStream is = null;
+        
         try {
             String rootUrl = server.getRootUrl();
-            is = new URL( rootUrl +  "/datasources/" + name ).openStream();
-            return new Config().read(is); 
-        } catch(FileNotFoundException fnfe) {
-            throw new RuntimeException("'"+name+"' datasource not found"); 
-        } catch(RuntimeException re) {
-            throw re;
-        } catch(Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } finally {
-            try {is.close();}catch(Exception ex){;}
-        }
+            URL url = new URL( rootUrl +  "/datasources/" + name );
+            return ConfigProperties.newParser().parse(url, null); 
+        } 
+        catch(Throwable t) { 
+            if ( t instanceof RuntimeException ) {
+                throw (RuntimeException) t;
+            }
+            if ( t instanceof FileNotFoundException) {
+                throw new RuntimeException("'"+name+"' datasource not found"); 
+            }
+            
+            throw new RuntimeException(t); 
+        } 
     }
     
     //This will attempt to locate plugins through META-INF/services if any is found.
@@ -87,20 +86,4 @@ public class DsServerResource extends ServerResource {
             }
         }
     } 
-    
-    
-    private class Config extends Properties 
-    {
-        private Map conf = new LinkedHashMap();
-        
-        public Map read(InputStream inp) throws IOException {
-            super.load(inp);
-            return conf; 
-        }
-        
-        public Object put(Object key, Object value) {
-            conf.put(key, value);             
-            return super.put(key, value); 
-        } 
-    }     
 }
