@@ -35,21 +35,29 @@ public class DataAdapterServiceResource extends ContextResource {
 
     
     private DataAdapter findDataAdapter(String name) {
-        InputStream is = null;
-        try {
-            URL u = new URL(context.getRootUrl() + "/adapters/" + name);
-            is = u.openStream();
-            Properties props = new Properties();
-            props.load( is );
-            return new DataAdapter(props);
-        } catch(FileNotFoundException fe) {
+        String[] fnames = new String[]{ "/adapters/", "/adapters/ext/" };  
+        InputStream inp = null; 
+        for (String fn : fnames ) {
+            try {
+                inp = new URL(context.getRootUrl() + fn + name ).openStream();
+                if ( inp != null ) break; 
+            } 
+            catch(Throwable t){;} 
+        }
+
+        if ( inp == null ) 
             throw new ResourceNotFoundException("'"+name+"' adapter not found");
+        
+        try {
+            Properties props = new Properties();
+            props.load( inp );
+            return new DataAdapter(props);
         } catch(RuntimeException re) {
             throw re;
         } catch(Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         } finally {
-            try { is.close(); } catch(Exception e){;}
+            try { inp.close(); } catch(Throwable e){;}
         }
     }
     

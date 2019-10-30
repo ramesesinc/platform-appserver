@@ -154,15 +154,18 @@ public abstract class ContextProvider {
             
             //load modules directory
             String path = getClassLoaderPath(name);
-            URLDirectory ud = new URLDirectory(new URL(path));
-            ud.list(new URLFilter(){
-                public boolean accept(URL u, String filter) {
-                    if( (filter.endsWith(".jar") || filter.endsWith(".jar/"))) {
-                        urlList.add(u);
+            String[] paths = new String[]{ path, path + "/ext" };
+            for (String spath : paths) {
+                URLDirectory ud = new URLDirectory(new URL(spath));
+                ud.list(new URLFilter(){
+                    public boolean accept(URL u, String filter) {
+                        if( (filter.endsWith(".jar") || filter.endsWith(".jar/"))) {
+                            urlList.add(u);
+                        }
+                        return false;
                     }
-                    return false;
-                }
-            });
+                });
+            }
             
             URL[] urls = urlList.toArray(new URL[]{});
             urc = new URLClassLoader(urls);           

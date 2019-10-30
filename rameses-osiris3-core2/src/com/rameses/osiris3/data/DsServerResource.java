@@ -15,6 +15,7 @@ import com.rameses.util.ConfigProperties;
 
 import com.rameses.util.Service;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,22 +45,25 @@ public class DsServerResource extends ServerResource {
     }
     
     public Map getDataInfo(String name) {
-        
+        String[] fnames = new String[]{ "/datasources/", "/datasources/ext/" };  
+        String rootUrl = server.getRootUrl();
+        InputStream inp = null;         
+        for (String fn : fnames ) {
+            try {
+                inp = new URL(rootUrl + fn + name ).openStream();
+                if ( inp != null ) break; 
+            } 
+            catch(Throwable t){;} 
+        }
+
+        if ( inp == null ) 
+            throw new RuntimeException("'"+name+"' datasource not found");
+
         try {
-            String rootUrl = server.getRootUrl();
-            URL url = new URL( rootUrl +  "/datasources/" + name );
-            return ConfigProperties.newParser().parse(url, null); 
-        } 
-        catch(Throwable t) { 
-            if ( t instanceof RuntimeException ) {
-                throw (RuntimeException) t;
-            }
-            if ( t instanceof FileNotFoundException) {
-                throw new RuntimeException("'"+name+"' datasource not found"); 
-            }
-            
-            throw new RuntimeException(t); 
-        } 
+            return ConfigProperties.newParser().parse(inp, null); 
+        } finally {
+            try { inp.close(); } catch(Throwable t){;} 
+        }
     }
     
     //This will attempt to locate plugins through META-INF/services if any is found.

@@ -58,11 +58,25 @@ public class XConnectionContextResource extends ContextResource {
             }
             
             String resourceName = key.split(":")[0];
-            URL u = new URL(context.getRootUrl() +  "/connections/" + resourceName );
-            if (u == null) throw new Exception("Connection " + resourceName + " not found");
+            String[] folderNames = new String[]{ "/connections/", "/connections/ext/" };  
+            InputStream inp = null; 
+            for (String fn : folderNames ) {
+                try {
+                    inp = new URL(context.getRootUrl() + fn + resourceName ).openStream();
+                    if ( inp != null ) break; 
+                } 
+                catch(Throwable t){;} 
+            }
 
-            InputStream inp  = u.openStream();
-            Map conf = ConfigProperties.newParser().parse(inp, context.getConf()); 
+            if (inp == null) throw new Exception("Connection " + resourceName + " not found");
+
+            Map conf = null; 
+            try {
+                conf = ConfigProperties.newParser().parse(inp, context.getConf()); 
+            } finally {
+                try { inp.close(); } catch(Throwable t){;} 
+            }
+            
             
             //load the connection
             String providerType = (String) conf.get("provider");
