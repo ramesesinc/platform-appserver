@@ -67,8 +67,7 @@ public final class EntityManagerProcessor {
         exec.execute();
     }
 
-    public SqlQuery createQuery(SqlDialectModel sqm, Map params, Map vars)
-            throws Exception {
+    public SqlQuery createQuery(SqlDialectModel sqm, Map params, Map vars) throws Exception {
         SqlUnit squ = SqlUnitCache.getSqlUnit(sqm, this.sqlDialect);
         SqlQuery qry = this.sqlContext.createQuery(squ);
         if ((sqm.getStart() > 0) || (sqm.getLimit() > 0)) {

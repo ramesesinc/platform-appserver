@@ -119,7 +119,7 @@ public class MsSqlDialect extends AbstractSqlDialect  {
     private String getPagingStatementDefault( SqlDialectModel model ) { 
         int _start = model.getStart();
         int _limit = model.getLimit();
-        String genkey = new java.rmi.server.UID().toString(); 
+
         StringBuilder buff = new StringBuilder();
         buff.append(" SELECT ");      
         if ( model.getLimit() > 0) { 
@@ -161,7 +161,7 @@ public class MsSqlDialect extends AbstractSqlDialect  {
         if ( model.getLimit() > 0 ) {
             sb.append(" TOP " + model.getLimit() ).append(" ");
         }
-        sb.append(" t2.*, '").append( genkey ).append("' as _sqlkey_ "); 
+        sb.append(" t2.* "); 
         sb.append(" FROM ( ").append( buff2 ).append(" )t2  "); 
         sb.append(" WHERE _rownum_ > "+ _start); 
         return sb.toString(); 
