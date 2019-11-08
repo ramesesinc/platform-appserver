@@ -1,3 +1,4 @@
 com.rameses.osiris3.server.httpclient.HttpClientConnectionProvider
+com.rameses.osiris3.server.httpclient.HttpServiceConnectionProvider
 com.rameses.osiris3.server.wsclient.WebsocketConnectionProvider
 com.rameses.osiris3.server.wss.SocketConnectionsProvider

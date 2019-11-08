@@ -3,31 +3,32 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.rameses.osiris3.xconnection;
+package com.rameses.osiris3.server.httpclient;
 
 import com.rameses.http.HttpClient;
 import com.rameses.osiris3.core.AbstractContext;
+import com.rameses.osiris3.xconnection.XConnection;
+import com.rameses.osiris3.xconnection.XConnectionProvider;
 import java.util.Map;
 
 /**
  *
  * @author elmonazareno
  */
-public class HttpConnectionProvider extends XConnectionProvider {
+public class HttpServiceConnectionProvider extends XConnectionProvider {
     
-    /** Creates a new instance of EmailXConnection */
-    public HttpConnectionProvider() {
+    public HttpServiceConnectionProvider() {
     }
 
     public String getProviderName() {
-       return "http";
+       return "httpservice";
     }
 
     public XConnection createConnection(String name, Map conf) {
-        return new HttpConnection(name,context, conf);
+        return new HttpServiceConnection(name,context, conf);
     }
     
-    public static class HttpConnection extends XConnection {
+    public static class HttpServiceConnection extends XConnection {
 
         private AbstractContext ctx;
         private Map conf;
@@ -37,7 +38,7 @@ public class HttpConnectionProvider extends XConnectionProvider {
         private String context;
         private boolean debug = false;
     
-        public HttpConnection(String name, AbstractContext ctx, Map conf) {
+        public HttpServiceConnection(String name, AbstractContext ctx, Map conf) {
             this.conf = conf;
             this.ctx = ctx;
             this.name = name;
