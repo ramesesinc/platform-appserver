@@ -78,7 +78,7 @@ public class MsSqlDialect extends AbstractSqlDialect  {
         final StringBuilder sb = new StringBuilder();
         final StringBuilder whereBuff = new StringBuilder();
         sb.append( " UPDATE ");
-        sb.append( getDelimiters()[0]+model.getTablealias()+getDelimiters()[1] );
+        sb.append( resolveTableName( model.getTablealias()) );
         sb.append( " ");
         sb.append( buildUpdateFieldsStatement(model, true) );
         
@@ -97,7 +97,7 @@ public class MsSqlDialect extends AbstractSqlDialect  {
     public String getDeleteStatement(SqlDialectModel model) {
         final StringBuilder sb = new StringBuilder();
         sb.append( " DELETE FROM ");
-        sb.append( getDelimiters()[0]+ model.getTablename()+getDelimiters()[1] );
+        sb.append( resolveTableName( model.getTablename() ));
         sb.append( " WHERE ");
         List<String> list = new ArrayList();
         buildFinderStatement(model, list, false);

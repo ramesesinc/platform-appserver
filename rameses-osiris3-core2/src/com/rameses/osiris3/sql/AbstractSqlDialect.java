@@ -84,7 +84,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
         for (Field vf : model.getFinderFields()) {
             StringBuilder sb = new StringBuilder();
             if(withAlias) {
-                sb.append(getDelimiters()[0] + vf.getTablealias() + getDelimiters()[1] + ".");
+                sb.append( resolveTableName( vf.getTablealias() ) + ".");
             }
             sb.append(getDelimiters()[0] + vf.getFieldname() + getDelimiters()[1]);
             sb.append("=");
@@ -110,7 +110,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
         final StringBuilder sb = new StringBuilder();
         final StringBuilder valueBuff = new StringBuilder();
         sb.append("INSERT INTO ");
-        sb.append(getDelimiters()[0] + model.getTablename() + getDelimiters()[1]);
+        sb.append( resolveTableName( model.getTablename() ));
         sb.append(" (");
         int i = 0;
         for (Field fld : model.getFields()) {
@@ -137,7 +137,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
         final StringBuilder sb = new StringBuilder();
         final StringBuilder valueBuff = new StringBuilder();
         sb.append("INSERT INTO ");
-        sb.append(getDelimiters()[0] + model.getTablename() + getDelimiters()[1]);
+        sb.append( resolveTableName( model.getTablename() ));
         sb.append(" (");
         int i = 0;
         for (Field fld : model.getFields()) {
@@ -164,7 +164,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
                 sb.append(", ");
             }
             if( withAlias ) {
-                sb.append(getDelimiters()[0] + vf.getTablealias() + getDelimiters()[1] + ".");
+                sb.append( resolveTableName( vf.getTablealias()) + ".");
             }
             sb.append(getDelimiters()[0] + vf.getFieldname() + getDelimiters()[1]);
             sb.append("=");
@@ -175,6 +175,20 @@ public abstract class AbstractSqlDialect implements SqlDialect {
             else {
                 sb.append("$P{" + vf.getExtendedName() + "}");
             }
+        }
+        return sb.toString();
+    }
+    
+    protected String resolveTableName( String name ) {
+        String[] arr = name.split("\\.");
+        String delim1 = getDelimiters()[0];
+        String delim2 = getDelimiters()[1];
+        StringBuilder sb = new StringBuilder(); 
+        int counter = 0; 
+        for (String s : arr) {
+            if ( counter > 0 ) sb.append(".");
+            sb.append( delim1 ).append( s ).append( delim2); 
+            counter++;
         }
         return sb.toString();
     }
@@ -189,10 +203,10 @@ public abstract class AbstractSqlDialect implements SqlDialect {
             if (i++ > 0) {
                 sb.append(", ");
             }
-            sb.append(getDelimiters()[0] + vw.getTablename() + getDelimiters()[1]);
+            sb.append( resolveTableName( vw.getTablename()));
             if (!vw.getTablename().equals(vw.getName())) {
                 sb.append(" ");
-                sb.append(" " + getDelimiters()[0]+vw.getName()+getDelimiters()[1] + " ");
+                sb.append(" " + resolveTableName( vw.getName()) + " ");
             }
         }
         return sb.toString();
@@ -209,10 +223,10 @@ public abstract class AbstractSqlDialect implements SqlDialect {
             LinkedSchemaView lsv = (LinkedSchemaView) avw;
             for (SchemaViewRelationField rf : lsv.getRelationFields()) {
                 StringBuilder sb = new StringBuilder();
-                sb.append(getDelimiters()[0] + rf.getTablealias() + getDelimiters()[1] + ".");
+                sb.append(resolveTableName(rf.getTablealias()) + ".");                
                 sb.append(getDelimiters()[0] + rf.getFieldname() + getDelimiters()[1]);
                 sb.append("=");
-                sb.append(getDelimiters()[0] + rf.getTargetView().getName() + getDelimiters()[1] + ".");
+                sb.append(resolveTableName(rf.getTargetView().getName()) + ".");
                 sb.append(getDelimiters()[0] + rf.getTargetField().getFieldname() + getDelimiters()[1]);
                 collectFilterList.add(sb.toString());
             }
@@ -226,9 +240,9 @@ public abstract class AbstractSqlDialect implements SqlDialect {
     protected String buildTablesForSelect( SqlDialectModel model, boolean joinTablesOnly ) {
         StringBuilder sb = new StringBuilder(); 
         if ( !joinTablesOnly ) { 
-            sb.append(getDelimiters()[0] + model.getTablename() + getDelimiters()[1]);
+            sb.append(resolveTableName( model.getTablename() ));
             if (!model.getTablename().equals(model.getTablealias())) {
-                sb.append(" " + getDelimiters()[0] +model.getTablealias() + getDelimiters()[1] + " ");
+                sb.append(" " + resolveTableName( model.getTablealias()) + " ");
             }
         }
         if (model.getJoinedViews() != null) {
@@ -243,9 +257,9 @@ public abstract class AbstractSqlDialect implements SqlDialect {
                     sjoinType = " LEFT ";
                 } 
                 sb.append( sjoinType + " JOIN " );
-                sb.append(" " + getDelimiters()[0] + lsv.getTablename() + getDelimiters()[1] + " ");
+                sb.append(" " + resolveTableName(lsv.getTablename()) + " ");
                 if (!lsv.getTablename().equals(lsv.getName())) {
-                    sb.append(" " + getDelimiters()[0] + lsv.getName() + getDelimiters()[1] + " ");
+                    sb.append(" " + resolveTableName( lsv.getName()) + " ");
                 }
                 sb.append(" ON ");
                 int j = 0;
@@ -253,10 +267,10 @@ public abstract class AbstractSqlDialect implements SqlDialect {
                     if (j++ > 0) {
                         sb.append(" AND ");
                     }
-                    sb.append(getDelimiters()[0] + rf.getTablealias() + getDelimiters()[1] + ".");
+                    sb.append(resolveTableName( rf.getTablealias() ) + ".");
                     sb.append(getDelimiters()[0] + rf.getFieldname() + getDelimiters()[1]);
                     sb.append("=");
-                    sb.append(getDelimiters()[0] + rf.getTargetView().getName() + getDelimiters()[1] + ".");
+                    sb.append(resolveTableName( rf.getTargetView().getName()) + ".");
                     sb.append(getDelimiters()[0] + rf.getTargetField().getFieldname() + getDelimiters()[1]);
                 }
             }
@@ -295,7 +309,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
         for( Field f: model.getFields() ) {
             if(i++>0) sb.append(",");
             if( ValueUtil.isEmpty(f.getExpr()) ) {
-                sb.append( getDelimiters()[0]+f.getTablealias()+getDelimiters()[1]+"." );
+                sb.append( resolveTableName( f.getTablealias())+"." );
                 sb.append( getDelimiters()[0]+f.getFieldname()+getDelimiters()[1] );
                 if(! f.getExtendedName().equals(f.getFieldname()) ) {
                     sb.append( " AS " + getDelimiters()[0]+f.getExtendedName()+getDelimiters()[1] );
@@ -319,7 +333,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
             for( Field f: model.getGroupFields() ) {
                 if(i++>0) sb.append(",");
                 if( ValueUtil.isEmpty(f.getExpr()) ) {
-                    sb.append( getDelimiters()[0]+f.getTablealias()+getDelimiters()[1]+"." );
+                    sb.append( resolveTableName( f.getTablealias()) +"." );
                     sb.append( getDelimiters()[0]+f.getFieldname()+getDelimiters()[1] );
                 }
                 else {
@@ -400,10 +414,10 @@ public abstract class AbstractSqlDialect implements SqlDialect {
                     .append( buildGroupByStatement( model ));
             } 
             
-            String baseTableName = (getDelimiters()[0] + model.getTablename() + getDelimiters()[1]); 
+            String baseTableName = resolveTableName( model.getTablename()); 
             String baseTableAlias = model.getTablealias(); 
             if ( baseTableAlias != null && baseTableAlias.trim().length() > 0 ) {
-                baseTableAlias = (getDelimiters()[0] + baseTableAlias + getDelimiters()[1]); 
+                baseTableAlias = resolveTableName( baseTableAlias ); 
             } else {
                 baseTableAlias = baseTableName; 
             }
@@ -453,7 +467,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
                 Field f = fields.get(i); 
                 if ( i > 0 ) sb.append(", "); 
                 
-                sb.append( getDelimiters()[0]+f.getTablealias()+getDelimiters()[1]+"." );
+                sb.append( resolveTableName( f.getTablealias()) +"." );
                 sb.append( getDelimiters()[0]+f.getFieldname()+getDelimiters()[1] );
                 sb.append(" AS pk"+ (i+1)); 
             } 
