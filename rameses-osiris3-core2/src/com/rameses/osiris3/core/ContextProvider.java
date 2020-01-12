@@ -9,6 +9,7 @@
 
 package com.rameses.osiris3.core;
 
+import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.util.ConfigProperties;
 import com.rameses.util.URLDirectory;
 import com.rameses.util.URLDirectory.URLFilter;
@@ -154,8 +155,17 @@ public abstract class ContextProvider {
             
             //load modules directory
             String path = getClassLoaderPath(name);
-            String[] paths = new String[]{ path, path + "/ext" };
-            for (String spath : paths) {
+            List<String> listPaths = new ArrayList();
+            listPaths.add( path );
+            listPaths.add( path + "/ext" );
+            
+            ModuleFolder mf = new ModuleFolder( new URL( path)); 
+            List<URL> uus = mf.getPluginServices();
+            for ( URL uu : uus ) {
+                listPaths.add( uu.toString()); 
+            }
+            
+            for ( String spath : listPaths ) {
                 URLDirectory ud = new URLDirectory(new URL(spath));
                 ud.list(new URLFilter(){
                     public boolean accept(URL u, String filter) {
@@ -175,7 +185,8 @@ public abstract class ContextProvider {
                 gc.addURL( u ); 
             } 
             return gc;
-        } catch(Exception ign){
+        } 
+        catch(Exception ign){
             throw new RuntimeException("ERROR init classloader for "+ name +" "+ ign.getMessage());
         }
     }

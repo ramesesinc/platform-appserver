@@ -9,6 +9,7 @@
 
 package com.rameses.osiris3.xconnection;
 
+import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.osiris3.core.ContextResource;
 import com.rameses.server.ServerConf;
 import com.rameses.util.ConfigProperties;
@@ -66,7 +67,16 @@ public class XConnectionContextResource extends ContextResource {
                 catch(Throwable t){;} 
             }
 
-            if (inp == null) throw new Exception("Connection " + resourceName + " not found");
+            if ( inp == null ) {
+                ModuleFolder mf = new ModuleFolder( context.getRootUrl() + "/modules");
+                if ( mf.exist()) {
+                    inp = mf.findResourceAsStream( "/connections/"+ resourceName ); 
+                }
+            }
+            
+            if (inp == null) {
+                throw new Exception("Connection " + resourceName + " not found");
+            }
 
             Map conf = null; 
             try {

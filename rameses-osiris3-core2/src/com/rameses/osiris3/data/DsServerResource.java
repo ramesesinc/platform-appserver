@@ -9,12 +9,12 @@
 
 package com.rameses.osiris3.data;
 
+import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.osiris3.core.OsirisServer;
 import com.rameses.osiris3.core.ServerResource;
 import com.rameses.util.ConfigProperties;
 
 import com.rameses.util.Service;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
@@ -56,9 +56,25 @@ public class DsServerResource extends ServerResource {
             catch(Throwable t){;} 
         }
 
-        if ( inp == null ) 
+        if ( inp == null ) {
+            Object oo = System.getProperties().get( OsirisServer.APP_URLS_PROPERTY ); 
+            if ( oo instanceof URL[] ) {
+                URL[] urls = (URL[]) oo; 
+                for (URL uu : urls) {
+                    if ( inp != null ) { break; }
+                    
+                    ModuleFolder mf = new ModuleFolder( uu.toString() + "modules" );
+                    if ( mf.exist()) {
+                        inp = mf.findResourceAsStream("datasources/" + name); 
+                    }
+                }
+            }
+        }
+        
+        if ( inp == null ) { 
             throw new RuntimeException("'"+name+"' datasource not found");
-
+        } 
+        
         try {
             return ConfigProperties.newParser().parse(inp, null); 
         } finally {

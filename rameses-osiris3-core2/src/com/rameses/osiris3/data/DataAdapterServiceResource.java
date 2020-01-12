@@ -9,11 +9,11 @@
 
 package com.rameses.osiris3.data;
 
+import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.osiris3.core.AppContext;
 import com.rameses.osiris3.core.ContextResource;
 import com.rameses.osiris3.core.ResourceNotFoundException;
 import com.rameses.osiris3.core.SharedContext;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
@@ -45,8 +45,16 @@ public class DataAdapterServiceResource extends ContextResource {
             catch(Throwable t){;} 
         }
 
-        if ( inp == null ) 
+        if ( inp == null ) {
+            ModuleFolder mf = new ModuleFolder( context.getRootUrl() + "/modules");
+            if ( mf.exist()) {
+                inp = mf.findResourceAsStream( "/adapters/"+ name ); 
+            }
+        }
+        
+        if ( inp == null ) {
             throw new ResourceNotFoundException("'"+name+"' adapter not found");
+        }
         
         try {
             Properties props = new Properties();

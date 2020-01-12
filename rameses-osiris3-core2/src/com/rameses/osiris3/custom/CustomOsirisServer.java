@@ -39,12 +39,14 @@ public class CustomOsirisServer extends OsirisServer {
     
     public void init() throws Exception {
         //load all apps
+        final List<URL> appUrls = new ArrayList();
         final List<String> list = new ArrayList();
         URLDirectory dir = new URLDirectory(new URL(getRootUrl()+"/apps"));
         dir.list( new URLFilter(){
             public boolean accept(URL u, String filter) {
                 if(filter.endsWith("/")) filter = filter.substring(0, filter.length()-1);
                 list.add(filter.substring( filter.lastIndexOf("/")+1));
+                appUrls.add( u ); 
                 return false;
             }
         });
@@ -58,6 +60,10 @@ public class CustomOsirisServer extends OsirisServer {
         
         if(autoload) {
             System.out.println("Loading apps");
+            
+            URL[] urls = appUrls.toArray(new URL[]{}); 
+            System.getProperties().put( APP_URLS_PROPERTY, urls); 
+            
             ExecutorService svc = Executors.newCachedThreadPool();
             for(final String s: list) {
                 System.out.println(s);

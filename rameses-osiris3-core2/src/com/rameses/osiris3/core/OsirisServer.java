@@ -19,6 +19,8 @@ import java.util.Map;
  */
 public abstract class OsirisServer {
     
+    public final static String APP_URLS_PROPERTY = "app.urls";
+    
     private static OsirisServer instance;
     
     public static OsirisServer getInstance() {
