@@ -10,18 +10,16 @@
 package com.rameses.osiris3.xconnection;
 
 import com.rameses.osiris3.core.ContextResource;
+import com.rameses.server.ServerConf;
 import com.rameses.util.ConfigProperties;
 import com.rameses.util.Service;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  *
@@ -72,11 +70,10 @@ public class XConnectionContextResource extends ContextResource {
 
             Map conf = null; 
             try {
-                conf = ConfigProperties.newParser().parse(inp, context.getConf()); 
+                conf = ConfigProperties.newParser().resolver(new ResolverImpl()).parse(inp, context.getConf()); 
             } finally {
                 try { inp.close(); } catch(Throwable t){;} 
             }
-            
             
             //load the connection
             String providerType = (String) conf.get("provider");
@@ -107,4 +104,17 @@ public class XConnectionContextResource extends ContextResource {
             throw new RuntimeException(e.getMessage(), e);
         }
     } 
+    
+    private class ResolverImpl extends ConfigProperties.Resolver {
+        public Object resolve(String name) {
+            if ( name != null && name.startsWith("@@")) {
+                String[] arr = name.split(":");
+                String skey = (arr.length == 2 ? arr[1] : ""); 
+                Map group = ServerConf.getGroup( name );
+                return group.get( skey ); 
+            }
+            
+            return super.resolve( name ); 
+        }
+    }
 } 
