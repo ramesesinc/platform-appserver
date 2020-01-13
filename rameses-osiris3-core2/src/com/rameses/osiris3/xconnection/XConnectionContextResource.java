@@ -9,6 +9,8 @@
 
 package com.rameses.osiris3.xconnection;
 
+import com.rameses.osiris3.common.AppSettings;
+import com.rameses.osiris3.common.AppSettings.AppConf;
 import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.osiris3.core.ContextResource;
 import com.rameses.server.ServerConf;
@@ -56,6 +58,10 @@ public class XConnectionContextResource extends ContextResource {
                 return xc; 
             }
             
+            String rootURLPath = new URL(context.getRootUrl()).toString();
+            String appName = rootURLPath.substring( rootURLPath.lastIndexOf('/')+1); 
+            AppConf appConf = AppSettings.getConf( appName ); 
+            
             String resourceName = key.split(":")[0];
             String[] folderNames = new String[]{ "/connections/", "/connections/ext/" };  
             InputStream inp = null; 
@@ -68,10 +74,8 @@ public class XConnectionContextResource extends ContextResource {
             }
 
             if ( inp == null ) {
-                ModuleFolder mf = new ModuleFolder( context.getRootUrl() + "/modules");
-                if ( mf.exist()) {
-                    inp = mf.findResourceAsStream( "/connections/"+ resourceName ); 
-                }
+                ModuleFolder mf = appConf.getModuleFolder(); 
+                inp = mf.findResourceAsStream( "/connections/"+ resourceName ); 
             }
             
             if (inp == null) {

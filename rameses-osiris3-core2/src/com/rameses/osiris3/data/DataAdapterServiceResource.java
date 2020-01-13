@@ -9,14 +9,18 @@
 
 package com.rameses.osiris3.data;
 
+import com.rameses.osiris3.common.AppSettings;
 import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.osiris3.core.AppContext;
 import com.rameses.osiris3.core.ContextResource;
 import com.rameses.osiris3.core.ResourceNotFoundException;
 import com.rameses.osiris3.core.SharedContext;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -35,6 +39,17 @@ public class DataAdapterServiceResource extends ContextResource {
 
     
     private DataAdapter findDataAdapter(String name) {
+        URL rootURL = null; 
+        try {
+            rootURL = new URL(context.getRootUrl());
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex); 
+        }
+
+        String rootURLPath = rootURL.toString();
+        String appName = rootURLPath.substring( rootURLPath.lastIndexOf('/')+1); 
+        AppSettings.AppConf appConf = AppSettings.getConf( appName ); 
+        
         String[] fnames = new String[]{ "/adapters/", "/adapters/ext/" };  
         InputStream inp = null; 
         for (String fn : fnames ) {
@@ -46,10 +61,8 @@ public class DataAdapterServiceResource extends ContextResource {
         }
 
         if ( inp == null ) {
-            ModuleFolder mf = new ModuleFolder( context.getRootUrl() + "/modules");
-            if ( mf.exist()) {
-                inp = mf.findResourceAsStream( "/adapters/"+ name ); 
-            }
+            ModuleFolder mf = appConf.getModuleFolder();
+            inp = mf.findResourceAsStream( "/adapters/"+ name ); 
         }
         
         if ( inp == null ) {

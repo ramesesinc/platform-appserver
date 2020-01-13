@@ -12,8 +12,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -23,6 +21,8 @@ public class ModuleFolder {
     
     private URL url;
     private URI uri;
+    
+    private File moduleExtDir;
     
     public ModuleFolder( String urlPath ) {
         try { 
@@ -57,15 +57,42 @@ public class ModuleFolder {
         return list( new DefaultServiceFilter());
     }
     
+    public File getModuleExtDir() { 
+        return moduleExtDir; 
+    }
+    public void setModuleExtDir( File moduleExtDir ) {
+        this.moduleExtDir = moduleExtDir;
+    }
+    
     public List<URL> getPluginServices() {
+        URL baseURL = null; 
+        File dir = getModuleExtDir();
+        if ( dir != null && dir.isDirectory()) {
+            baseURL = toURL( dir ); 
+        }
+        
+        if ( baseURL == null ) {
+            return new ArrayList();
+        }
+        
         PluginServiceFilter f = new PluginServiceFilter();
-        list( f );
+        listImpl( f, baseURL );
         return f.list; 
     }
     
     public URL findResource( String name ) {
+        URL baseURL = null; 
+        File dir = getModuleExtDir();
+        if ( dir != null && dir.isDirectory()) {
+            baseURL = toURL( dir ); 
+        }
+        
+        if ( baseURL == null ) {
+            return null; 
+        }
+
         PluginResourceFilter filter = new PluginResourceFilter( name );
-        list( filter );
+        listImpl( filter, baseURL );
         return filter.result; 
     }
         
@@ -81,12 +108,16 @@ public class ModuleFolder {
     }
     
     public List<URL> list( ModuleFolder.Filter filter ) {
-        if ( url == null ) { 
+        return listImpl( filter, this.url ); 
+    }
+    
+    private List<URL> listImpl( ModuleFolder.Filter filter, URL baseURL ) {
+        if ( baseURL == null ) { 
             return new ArrayList();
         }
-        String protocol = url.getProtocol();
+        String protocol = baseURL.getProtocol();
         if ( "file".equals( protocol)) {
-            File dir = new File( uri );
+            File dir = new File(toURI(baseURL)); 
             if ( !dir.exists() || !dir.isDirectory()) {
                 return new ArrayList();
             }
@@ -113,7 +144,7 @@ public class ModuleFolder {
         }
         return null; 
     }
-    
+        
     private URI toURI( URL url ) {
         try {
             return url.toURI(); 

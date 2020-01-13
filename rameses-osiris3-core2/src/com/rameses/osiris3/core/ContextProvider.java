@@ -9,6 +9,8 @@
 
 package com.rameses.osiris3.core;
 
+import com.rameses.osiris3.common.AppSettings;
+import com.rameses.osiris3.common.AppSettings.AppConf;
 import com.rameses.osiris3.common.ModuleFolder;
 import com.rameses.util.ConfigProperties;
 import com.rameses.util.URLDirectory;
@@ -20,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -97,25 +100,32 @@ public abstract class ContextProvider {
     protected  ClassLoader getClassLoader(String name) {
         URLClassLoader urc = null;
         try {
+            Map conf = getConf( name ); 
+            URL appURL = new URL(getRootUrl() +"/"+ name);
+            AppConf appConf = AppSettings.addConf(name, conf, appURL); 
+            
             List<URL> urlconfs = new ArrayList(); 
             try {
-                URL url = new URL(getRootUrl() +"/"+ name + "/modules.conf"); 
-                File file = new File( url.getFile()); 
-                if ( file.exists() && file.isDirectory() == false ) {
-                    urlconfs.add( url ); 
+                File file = appConf.getFile("modules.conf"); 
+                if ( file != null && !file.isDirectory()) {
+                    urlconfs.add( appConf.toURL( file ));  
                 }
-            } catch(Throwable t) {
+            } 
+            catch(Throwable t) {
                 System.out.println("failed to load '"+ name +"/modules.conf");
             }
             
             try {
-                File dir = new File( new URL(getRootUrl() +"/"+ name +"/modules.conf.d").getFile()); 
-                for (File f : dir.listFiles()) {
-                    if ( f.getName().endsWith(".conf") && f.isDirectory() == false) {
-                        urlconfs.add( f.toURI().toURL()); 
-                    } 
+                File dir = appConf.getFile("modules.conf.d"); 
+                if ( dir != null && dir.isDirectory() ) {
+                    for (File f : dir.listFiles()) {
+                        if ( f.getName().endsWith(".conf") && !f.isDirectory()) {
+                            urlconfs.add( appConf.toURL( f )); 
+                        } 
+                    }
                 }
-            } catch(Throwable t) {
+            } 
+            catch(Throwable t) {
                 //do nothing 
             }
             
@@ -157,9 +167,8 @@ public abstract class ContextProvider {
             String path = getClassLoaderPath(name);
             List<String> listPaths = new ArrayList();
             listPaths.add( path );
-            listPaths.add( path + "/ext" );
             
-            ModuleFolder mf = new ModuleFolder( new URL( path)); 
+            ModuleFolder mf = appConf.getModuleFolder();
             List<URL> uus = mf.getPluginServices();
             for ( URL uu : uus ) {
                 listPaths.add( uu.toString()); 
