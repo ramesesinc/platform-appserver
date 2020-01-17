@@ -104,13 +104,24 @@ public final class AppSettings {
             return toFile( url ); 
         }
         
-        public File getModuleExtDir() {
-            String[] arr = new String[]{ getProperty("modules.ext.dir") }; 
-            if ( arr[0] != null && arr[0].length() > 0 ) {
-                File ff = new File( arr[0]); 
-                if ( ff.exists()) return ff; 
+        private File[] extdirs = null;
+        
+        public File[] getModuleExtDir() {
+            if ( extdirs == null ) {
+                List<File> dirs = new ArrayList();
+                File fdir = getFile("modules/ext"); 
+                if ( fdir != null ) dirs.add( fdir ); 
+                
+                String[] arr = new String[]{ getProperty("modules.ext.dir") }; 
+                if ( arr[0] != null && arr[0].length() > 0 ) {
+                    fdir = new File( arr[0]); 
+                    if ( fdir.exists() && fdir.isDirectory()) {
+                        dirs.add( fdir ); 
+                    }
+                } 
+                extdirs = (File[]) dirs.toArray(new File[]{}); 
             } 
-            return getFile("modules/ext"); 
+            return extdirs; 
         } 
         
         public URL toURL( File file ) {

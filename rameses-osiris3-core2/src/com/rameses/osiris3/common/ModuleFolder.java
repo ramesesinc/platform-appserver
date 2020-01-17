@@ -22,7 +22,7 @@ public class ModuleFolder {
     private URL url;
     private URI uri;
     
-    private File moduleExtDir;
+    private File[] moduleExtDirs;
     
     public ModuleFolder( String urlPath ) {
         try { 
@@ -57,43 +57,62 @@ public class ModuleFolder {
         return list( new DefaultServiceFilter());
     }
     
-    public File getModuleExtDir() { 
-        return moduleExtDir; 
+    public File[] getModuleExtDir() { 
+        return moduleExtDirs; 
     }
-    public void setModuleExtDir( File moduleExtDir ) {
-        this.moduleExtDir = moduleExtDir;
+    public void setModuleExtDir( File[] moduleExtDirs ) {
+        this.moduleExtDirs = moduleExtDirs;
     }
     
     public List<URL> getPluginServices() {
-        URL baseURL = null; 
-        File dir = getModuleExtDir();
-        if ( dir != null && dir.isDirectory()) {
-            baseURL = toURL( dir ); 
+        List<URL> urls = new ArrayList();
+        File[] extdirs = getModuleExtDir();
+        if ( extdirs != null ) {
+            for ( File dir : extdirs ) {
+                if ( dir != null && dir.isDirectory()) {
+                    urls.add( toURL( dir ));
+                }
+            }
         }
         
-        if ( baseURL == null ) {
-            return new ArrayList();
+        if ( urls.isEmpty()) {
+            return urls;
         }
-        
-        PluginServiceFilter f = new PluginServiceFilter();
-        listImpl( f, baseURL );
-        return f.list; 
+
+        List results = new ArrayList();
+        for ( URL uu : urls ) {
+            PluginServiceFilter f = new PluginServiceFilter();
+            listImpl( f, uu );
+            if ( f.list != null ) {
+                results.addAll( f.list ); 
+            }
+        }
+        return results; 
     }
     
     public URL findResource( String name ) {
-        URL baseURL = null; 
-        File dir = getModuleExtDir();
-        if ( dir != null && dir.isDirectory()) {
-            baseURL = toURL( dir ); 
+        List<URL> urls = new ArrayList();
+        File[] extdirs = getModuleExtDir();
+        if ( extdirs != null ) {
+            for ( File dir : extdirs ) {
+                if ( dir != null && dir.isDirectory()) {
+                    urls.add( toURL( dir ));
+                }
+            }
         }
         
-        if ( baseURL == null ) {
+        if ( urls.isEmpty()) {
             return null; 
         }
 
-        PluginResourceFilter filter = new PluginResourceFilter( name );
-        listImpl( filter, baseURL );
-        return filter.result; 
+        for ( URL uu : urls ) {
+            PluginResourceFilter filter = new PluginResourceFilter( name );
+            listImpl( filter, uu );
+            if ( filter.result != null ) {
+                return filter.result; 
+            }
+        }
+        return null; 
     }
         
     public InputStream findResourceAsStream( String name ) {
