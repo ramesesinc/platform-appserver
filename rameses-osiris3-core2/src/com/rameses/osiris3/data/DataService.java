@@ -178,4 +178,13 @@ public class DataService extends ContextService {
         return this.schemaManager;
     }
     
+    public void clearSchema() {
+        SchemaManager sm = getSchemaManager(); 
+        if ( sm != null ) sm.removeAll(); 
+    }
+    public void clearSql() {
+        if ( sqlManager != null ) {
+            sqlManager.removeAll(); 
+        }
+    }
 }

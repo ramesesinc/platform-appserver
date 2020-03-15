@@ -11,8 +11,6 @@ package com.rameses.osiris3.script;
 
 import com.rameses.osiris3.core.*;
 import groovy.lang.GroovyClassLoader;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;

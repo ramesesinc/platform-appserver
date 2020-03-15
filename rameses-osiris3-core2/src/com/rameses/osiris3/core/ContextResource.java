@@ -11,6 +11,7 @@ package com.rameses.osiris3.core;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,6 +20,10 @@ import java.util.Map;
  */
 public abstract class ContextResource {
     
+    static class CacheTreeLocked {}
+    
+    private final CacheTreeLocked CACHE_LOCKED = new CacheTreeLocked(); 
+            
     protected OsirisServer server;
     protected AbstractContext context;
     protected Map<String, Object> resources = Collections.synchronizedMap(new HashMap());
@@ -38,24 +43,30 @@ public abstract class ContextResource {
     } 
     
     public final <T> T getResource(String key) {
-        Object res = null;
-        if( !resources.containsKey(key) ) {
-            res = findResource(key);
-            if(isCached()) {
-                resources.put(key,res);
+        synchronized( CACHE_LOCKED ) {
+            Object res = null;
+            if( !resources.containsKey(key) ) {
+                res = findResource(key);
+                if(isCached()) {
+                    resources.put(key,res);
+                }
+            } else {
+                res = (T)resources.get(key);
             }
-        } else {
-            res = (T)resources.get(key);
+            return (T) res;
         }
-        return (T) res;
     }
     
     public void remove(String key) {
-        resources.remove( key );
+        synchronized( CACHE_LOCKED ) {
+            resources.remove( key );
+        }
     }
     
     public void removeAll() {
-        resources.clear();
+        synchronized( CACHE_LOCKED ) {
+            resources.clear();
+        }
     }
 
     public void setServer(OsirisServer server) {
@@ -66,5 +77,9 @@ public abstract class ContextResource {
         this.context = context;
     }
     
-    
+    public void copyValues( List infos ) {
+        synchronized( CACHE_LOCKED ) {
+            infos.addAll( resources.values());
+        }
+    }
 }

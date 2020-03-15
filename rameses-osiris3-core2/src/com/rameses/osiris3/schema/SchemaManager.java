@@ -23,12 +23,15 @@ import java.util.Map;
  */
 public abstract class SchemaManager {
     
+    static class CacheTreeLocked {}
+    private final CacheTreeLocked CACHE_LOCKED = new CacheTreeLocked();
     
+    private Map<String,Schema> cache = Collections.synchronizedMap(new Hashtable());
+
     public SchemaManager() {
     }
-    
+        
     public abstract SchemaConf getConf();
-    private Map<String,Schema> cache = Collections.synchronizedMap(new Hashtable());
     
     public Schema getSchema(String sname) {
         String name = sname;
@@ -36,17 +39,25 @@ public abstract class SchemaManager {
             name = sname.substring(0, sname.indexOf(":"));
         }
 
-        //find the schema and check in cache
-        Schema schema = cache.get(name);
-        if(schema !=null) return schema;
-        
-        for(SchemaProvider sp: getConf().getProviders()) {
-            schema = sp.getSchema(name);
-            if( schema!=null ) {
-                cache.put(name, schema);
+        Schema schema = null; 
+        synchronized ( CACHE_LOCKED ) {
+            //find the schema and check in cache
+            schema = cache.get(name);
+            if ( schema != null ) {
                 return schema;
             }
         }
+
+        synchronized ( CACHE_LOCKED ) {
+            for(SchemaProvider sp: getConf().getProviders()) {
+                schema = sp.getSchema(name);
+                if( schema!=null ) {
+                    cache.put(name, schema);
+                    return schema;
+                }
+            }
+        }
+        
         throw new RuntimeException("Schema " + name +  " cannot be found from provided resources");
     }
     
@@ -150,4 +161,22 @@ public abstract class SchemaManager {
     }
     
     
+    //
+    // helper methods for caching only
+    //
+    public void copyValues( List list ) {
+        synchronized ( CACHE_LOCKED ) {
+            list.addAll( cache.values() ); 
+        }
+    }
+    public void remove( String name ) {
+        synchronized ( CACHE_LOCKED ) {
+            cache.remove( name ); 
+        }
+    }
+    public void removeAll() {
+        synchronized ( CACHE_LOCKED ) {
+            cache.clear();
+        }
+    }
 }

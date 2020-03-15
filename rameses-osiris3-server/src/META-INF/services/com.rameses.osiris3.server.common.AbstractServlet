@@ -7,3 +7,6 @@ com.rameses.osiris3.server.AsyncRegisterServlet
 com.rameses.osiris3.server.AsyncResponseServlet
 com.rameses.osiris3.server.AsyncUnregisterServlet
 com.rameses.osiris3.server.AsyncTracertServlet
+com.rameses.osiris3.server.CacheMonitorManagerServlet
+com.rameses.osiris3.server.CacheMonitorScriptServlet
+com.rameses.osiris3.server.CacheMonitorSchemaServlet

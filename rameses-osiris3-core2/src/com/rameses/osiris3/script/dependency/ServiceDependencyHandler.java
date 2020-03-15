@@ -174,6 +174,10 @@ public class ServiceDependencyHandler extends DependencyHandler {
         } 
         
         Object lookupService( String serviceName ) throws Exception {
+            if ( serviceName.indexOf(':') > 1 ) {
+                return lookupService( serviceName, "remote-script-mq" ); 
+            }
+            
             TransactionContext txn = TransactionContext.getCurrentContext();
             AbstractContext ac = txn.getContext();
             

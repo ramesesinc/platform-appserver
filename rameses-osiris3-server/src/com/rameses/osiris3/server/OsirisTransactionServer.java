@@ -55,7 +55,7 @@ public class OsirisTransactionServer implements ServerLoader  {
     
     private int port = 8090;
     private int taskPoolSize = 100;
-    private long blockingTimeout =  20000;
+    private long blockingTimeout =  60000;
     
     public OsirisTransactionServer(String name) {
         this.name = name; 

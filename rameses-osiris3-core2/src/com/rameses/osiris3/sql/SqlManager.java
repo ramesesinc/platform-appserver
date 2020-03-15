@@ -9,6 +9,7 @@
 
 package com.rameses.osiris3.sql;
 
+import com.rameses.osiris3.schema.SchemaManager;
 import java.sql.Connection;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -20,7 +21,7 @@ import javax.sql.DataSource;
  *
  */
 public class SqlManager {
-    
+       
     //=== static area ===
     private static SqlManager instance;
     
@@ -35,7 +36,9 @@ public class SqlManager {
         return instance;
     }
     
-    
+    static class CacheTreeLocked {}
+    private final CacheTreeLocked CACHE_LOCKED = new CacheTreeLocked();
+
     //=== instance area ===
     private SqlConf conf = new SqlConf();
     
@@ -61,22 +64,26 @@ public class SqlManager {
     }
     
     public SqlUnit getParsedSqlUnit(String statement) {
-        String key = statement.hashCode()+"";
-        SqlUnit su = cache.get(key);
-        if(su==null) {
-            su = new SqlUnit(statement);
-            if(isCached()) cache.put(key, su);
+        synchronized( CACHE_LOCKED ) {
+            String key = statement.hashCode()+"";
+            SqlUnit su = cache.get(key);
+            if(su==null) {
+                su = new SqlUnit(statement);
+                if(isCached()) cache.put(key, su);
+            }
+            return su;
         }
-        return su;
     }
     
     public SqlUnit getSqlUnit(String key, SqlUnitSource src) {
-        SqlUnit su = cache.get(key);
-        if(su==null) {
-            su = src.getStatement();
-            if(isCached()) cache.put(key, su);
+        synchronized( CACHE_LOCKED ) {
+            SqlUnit su = cache.get(key);
+            if(su==null) {
+                su = src.getStatement();
+                if(isCached()) cache.put(key, su);
+            }
+            return su;
         }
-        return su;
     }
     
     public SqlUnit getNamedSqlUnit(String name, SqlDialect dialect) {
@@ -85,8 +92,11 @@ public class SqlManager {
         //type is represnted in the extension part.
         String type = name.substring( extIndex+1 );
         
-        SqlUnit su = cache.get(unitName);
-        if( su!=null) return su;
+        SqlUnit su = null; 
+        synchronized (CACHE_LOCKED) {
+            su = cache.get(unitName);
+            if ( su != null ) return su;
+        }
         
         Map<String, SqlUnitProvider> providers = getConf().getSqlUnitProviders();
         //extension represents the type of Sql unit.
@@ -95,12 +105,15 @@ public class SqlManager {
         }
         
         su = providers.get(type).getSqlUnit(unitName, dialect );
-        if(su==null) {
+        if(su == null) {
             throw new RuntimeException("Sql unit " + name + " is not found");
         }
         
-        if(isCached()) cache.put(name, su);
-        
+        synchronized (CACHE_LOCKED) {
+            if ( isCached() ) {
+                cache.put(name, su);
+            }
+        }
         return su;
     }
     
@@ -145,4 +158,9 @@ public class SqlManager {
         return cache;
     }
     
+    public void removeAll() {
+        synchronized (CACHE_LOCKED) {
+            cache.clear(); 
+        }
+    }
 }
