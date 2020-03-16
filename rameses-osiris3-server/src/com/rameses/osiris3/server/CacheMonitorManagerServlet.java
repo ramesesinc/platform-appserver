@@ -8,6 +8,7 @@ import com.rameses.osiris3.core.AppContext;
 import com.rameses.osiris3.core.ContextResource;
 import com.rameses.osiris3.core.OsirisServer;
 import com.rameses.osiris3.data.DataService;
+import com.rameses.osiris3.script.InterceptorSet;
 import com.rameses.osiris3.script.ScriptInfo;
 import com.rameses.osiris3.sql.SqlUnitCache;
 import com.rameses.server.ServerPID;
@@ -46,6 +47,10 @@ public class CacheMonitorManagerServlet extends ServiceInvokerServlet {
                 ContextResource cr = ac.getContextResource( ScriptInfo.class );
                 if ( cr != null ) cr.removeAll(); 
             }
+            else if ( action.equalsIgnoreCase("clearInterceptors")) {
+                ContextResource cr = ac.getContextResource( InterceptorSet.class );
+                if ( cr != null ) cr.removeAll(); 
+            }
             else if ( action.equalsIgnoreCase("clearSchema")) {
                 DataService dataSvc = ac.getService( DataService.class );
                 dataSvc.clearSchema(); 
@@ -75,6 +80,13 @@ public class CacheMonitorManagerServlet extends ServiceInvokerServlet {
         buff.append("   <td class=\"actions\">");
         buff.append("      <a href=\""+ homepath +"?action=clearScript\">Clear Cache</a>&nbsp;");
         buff.append("      <a href=\""+ req.getContextPath() +"/cache/scripts/"+ contextName +"\">View Details</a>");
+        buff.append("   </td>");
+        buff.append("</tr>");
+        buff.append("<tr class=\"filler\"><td>&nbsp;</td></tr>");
+        buff.append("<tr>");
+        buff.append("   <td class=\"key\">Interceptors</td>");
+        buff.append("   <td class=\"actions\">");
+        buff.append("      <a href=\""+ homepath +"?action=clearInterceptors\">Clear Cache</a>&nbsp;");
         buff.append("   </td>");
         buff.append("</tr>");
         buff.append("<tr class=\"filler\"><td>&nbsp;</td></tr>");

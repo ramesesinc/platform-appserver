@@ -45,6 +45,7 @@ public class CacheMonitorSchemaServlet extends ServiceInvokerServlet {
         DataService dataSvc = ac.getService( DataService.class );
         SchemaManager sm = dataSvc.getSchemaManager();
         
+        String mgrpath = req.getContextPath() +"/cache/manager/"+ contextName;         
         String homepath = req.getContextPath() +"/cache/schema/"+ contextName;
         String nameToRemove = req.getParameter("remove"); 
         if ( nameToRemove != null && nameToRemove.trim().length() > 0 ) {
@@ -74,6 +75,8 @@ public class CacheMonitorSchemaServlet extends ServiceInvokerServlet {
         buff.append("<a href=\"").append( homepath ).append("?action=refresh\">Refresh</a>");
         buff.append("&nbsp;&nbsp;&nbsp;");
         buff.append("<a href=\"").append( homepath ).append("?action=removeall\">Remove All</a>");
+        buff.append("&nbsp;&nbsp;&nbsp;");
+        buff.append("<a href=\"").append( mgrpath ).append("\">Manager</a>");
         buff.append("<br/><br/>");
         buff.append("<table cellpadding=\"2\" cellspacing=\"0\">"); 
         buff.append("<tr>");

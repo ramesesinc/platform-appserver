@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -38,10 +39,8 @@ public class InterceptorSetContextResource extends ContextResource {
     private List<InterceptorInfo> afterInterceptors;
     private boolean initialized;
     
-    
     public void init() {
     }
-    
     
     protected synchronized Set<String> getInterceptorNames() {
         InputStream is = null;
@@ -71,45 +70,101 @@ public class InterceptorSetContextResource extends ContextResource {
         }
     }
     
-    private synchronized void loadInterceptors() {
-        if(initialized) return;
+    private void loadInterceptors() {
+        synchronized ( CACHE_LOCKED ) {
+            if ( initialized ) return;
+
+            beforeInterceptors  = new ArrayList();
+            afterInterceptors   = new ArrayList();
+
+            Set<String> set = getInterceptorNames();
+            for ( String sname: set ) {
+                loadInterceptor(sname, false);
+            }
+            initialized = true;
+            set.clear();
+        }
+    }
+    
+    private void loadInterceptor( String sname, boolean reload ) {
+        if ( sname == null || sname.length() == 0 ) {
+            return; 
+        }
         
-        beforeInterceptors  = new ArrayList();
-        afterInterceptors   = new ArrayList();
-        
-        Set<String> set = getInterceptorNames();
-        
-        for( String sname: set ) {
-            ScriptInfo info = context.getResource( ScriptInfo.class,sname );
-            ClassDef classDef = info.getClassDef();
-            for(AnnotationMethod m: classDef.getAnnotatedMethods()) {
-                Annotation a = m.getAnnotation();
-                if(a.annotationType() == Before.class) {
-                    Before ba = (Before)a;
-                    InterceptorInfo inf =  new InterceptorInfo(info.getName(), m.getMethod().getName() );
-                    inf.setEval( ba.eval() );
-                    inf.setExclude( ba.exclude() );
-                    inf.setIndex( ba.index() );
-                    inf.setPattern( ba.pattern() );
-                    if(m.getMethod().isAnnotationPresent(Async.class)) {
-                        inf.setAsync(true);
-                    }
-                    beforeInterceptors.add( inf  );
-                } else if(a.annotationType() == After.class) {
-                    After aa = (After)a;
-                    InterceptorInfo inf =  new InterceptorInfo(info.getName(), m.getMethod().getName() );
-                    inf.setEval( aa.eval() );
-                    inf.setExclude( aa.exclude() );
-                    inf.setIndex( aa.index() );
-                    inf.setPattern( aa.pattern() );
-                    if(m.getMethod().isAnnotationPresent(Async.class)) {
-                        inf.setAsync(true);
-                    }
-                    afterInterceptors.add( inf  );
+        if ( reload ) {
+            List beforelist = new ArrayList();
+            for (InterceptorInfo inf : beforeInterceptors) {
+                if ( sname.equals( inf.getServiceName())) {
+                    beforelist.add( inf );
                 }
             }
+        
+            List afterlist = new ArrayList();
+            for (InterceptorInfo inf : afterInterceptors) {
+                if ( sname.equals( inf.getServiceName())) {
+                    afterlist.add( inf );
+                }
+            }
+
+            afterInterceptors.removeAll( afterlist ); 
+            beforeInterceptors.removeAll( beforelist );
+            
+            List keys = new ArrayList();
+            for (Object o : resources.values()) {
+                if ( o instanceof InterceptorSet ) {
+                    InterceptorSet it = (InterceptorSet) o;
+                    if ( it.getAfterInterceptors().removeAll( afterlist )) {
+                        keys.add( it.getName());
+                    }
+                    if ( it.getBeforeInterceptors().removeAll( beforelist )) {
+                        keys.add( it.getName());
+                    }
+                }
+            }
+            for (Object okey : keys) { 
+                resources.remove(okey); 
+            }
+            
+            keys.clear();
+            afterlist.clear(); 
+            beforelist.clear();
         }
-        initialized = true;
+        
+        ScriptInfo info = null; 
+        try {
+            info = context.getResource( ScriptInfo.class, sname );
+        } catch(Throwable t) {;} 
+        
+        if ( info == null ) return; 
+        
+        ClassDef classDef = info.getClassDef();
+        for ( AnnotationMethod m: classDef.getAnnotatedMethods()) {
+            Annotation a = m.getAnnotation();
+            if (a.annotationType() == Before.class) {
+                Before ba = (Before)a;
+                InterceptorInfo inf =  new InterceptorInfo(info.getName(), m.getMethod().getName() );
+                inf.setEval( ba.eval() );
+                inf.setExclude( ba.exclude() );
+                inf.setIndex( ba.index() );
+                inf.setPattern( ba.pattern() );
+                if(m.getMethod().isAnnotationPresent(Async.class)) {
+                    inf.setAsync(true);
+                }
+                beforeInterceptors.add( inf  );
+            } 
+            else if (a.annotationType() == After.class) {
+                After aa = (After)a;
+                InterceptorInfo inf =  new InterceptorInfo(info.getName(), m.getMethod().getName() );
+                inf.setEval( aa.eval() );
+                inf.setExclude( aa.exclude() );
+                inf.setIndex( aa.index() );
+                inf.setPattern( aa.pattern() );
+                if (m.getMethod().isAnnotationPresent(Async.class)) {
+                    inf.setAsync(true);
+                }
+                afterInterceptors.add( inf  );
+            }
+        }
     }
     
     
@@ -130,19 +185,21 @@ public class InterceptorSetContextResource extends ContextResource {
             }
         }
         
-        if(!initialized ) {
-            loadInterceptors();
-        }
-        
-        for( InterceptorInfo info : beforeInterceptors ) {
-            if(!name.matches( info.getPattern() )) continue;
-            if(name.matches( info.getExclude())) continue;
-            _before.add(info);
-        }
-        for( InterceptorInfo info : afterInterceptors ) {
-            if(!name.matches( info.getPattern() )) continue;
-            if(name.matches( info.getExclude())) continue;
-            _after.add(info);
+        synchronized ( CACHE_LOCKED ) {
+            if ( !initialized ) {
+                loadInterceptors();
+            }
+
+            for( InterceptorInfo info : beforeInterceptors ) {
+                if(!name.matches( info.getPattern() )) continue;
+                if(name.matches( info.getExclude())) continue;
+                _before.add(info);
+            }
+            for( InterceptorInfo info : afterInterceptors ) {
+                if(!name.matches( info.getPattern() )) continue;
+                if(name.matches( info.getExclude())) continue;
+                _after.add(info);
+            }
         }
         
         List<InterceptorInfo> _beforeList = new ArrayList();
@@ -158,11 +215,31 @@ public class InterceptorSetContextResource extends ContextResource {
         return new InterceptorSet(name, _beforeList, _afterList );
     }
     
-    public void remove(String name) {
-        beforeInterceptors.clear();
-        afterInterceptors.clear();
-        super.remove(name);
+    @Override
+    protected void afterRemove(String key) {
+        String findKey = key + ".";
+        List delkeys = new ArrayList();
+        Iterator keys = resources.keySet().iterator();
+        while (keys.hasNext()) {
+            Object okey = keys.next();
+            if ( okey == null ) continue; 
+
+            if ( okey.toString().startsWith( findKey )) {
+                delkeys.add( okey ); 
+            }
+        }
+        for (Object okey : delkeys) {
+            resources.remove( okey ); 
+        } 
+        delkeys.clear(); 
+        
+        loadInterceptor( key, true ); 
     }
 
-    
+    @Override
+    protected void afterRemoveAll() {
+        initialized = false;
+        beforeInterceptors.clear();
+        afterInterceptors.clear();
+    }
 }

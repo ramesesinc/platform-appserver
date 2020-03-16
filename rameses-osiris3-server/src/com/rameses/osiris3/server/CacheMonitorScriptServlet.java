@@ -7,6 +7,7 @@ package com.rameses.osiris3.server;
 import com.rameses.osiris3.core.AppContext;
 import com.rameses.osiris3.core.ContextResource;
 import com.rameses.osiris3.core.OsirisServer;
+import com.rameses.osiris3.script.InterceptorSet;
 import com.rameses.osiris3.script.ScriptInfo;
 import com.rameses.server.ServerPID;
 import java.io.IOException;
@@ -40,27 +41,41 @@ public class CacheMonitorScriptServlet extends ServiceInvokerServlet {
         
         String contextName = pathinfo.split("/")[0];
         AppContext ac = OsirisServer.getInstance().getContext( AppContext.class, contextName );
-        ContextResource cr = ac.getContextResource( ScriptInfo.class );
-
+        ContextResource scriptCtx = ac.getContextResource( ScriptInfo.class );
+        ContextResource interceptorCtx = ac.getContextResource( InterceptorSet.class );
+        
+        String mgrpath = req.getContextPath() +"/cache/manager/"+ contextName;        
         String homepath = req.getContextPath() +"/cache/scripts/"+ contextName;
         String nameToRemove = req.getParameter("remove"); 
         if ( nameToRemove != null && nameToRemove.trim().length() > 0 ) {
-            cr.remove( nameToRemove ); 
+            if ( scriptCtx != null ) {
+                scriptCtx.remove( nameToRemove );             
+            }
+            if ( interceptorCtx != null && nameToRemove.startsWith("interceptors/")) { 
+                interceptorCtx.remove( nameToRemove ); 
+            }
+
             res.sendRedirect( homepath ); 
             return;
         }
         
         String actionName = req.getParameter("action"); 
         if ( actionName != null && actionName.matches("refresh|removeall") ) { 
-            if ( actionName.equals("removeall")) {
-                cr.removeAll();
+            if ( scriptCtx != null && actionName.equals("removeall")) {
+                scriptCtx.removeAll();
+            }            
+            if ( interceptorCtx != null && actionName.equals("removeall")) {
+                interceptorCtx.removeAll(); 
             }
+
             res.sendRedirect( homepath ); 
             return; 
         }
         
         List list = new ArrayList();
-        cr.copyValues(list);
+        if ( scriptCtx != null ) {
+            scriptCtx.copyValues(list);
+        }
         Collections.sort(list, new ComparatorImpl());        
 
         StringBuilder buff = new StringBuilder();
@@ -71,7 +86,9 @@ public class CacheMonitorScriptServlet extends ServiceInvokerServlet {
         buff.append("<a href=\"").append( homepath ).append("?action=refresh\">Refresh</a>");
         buff.append("&nbsp;&nbsp;&nbsp;");
         buff.append("<a href=\"").append( homepath ).append("?action=removeall\">Remove All</a>");
-        buff.append("<br/><br/>");        
+        buff.append("&nbsp;&nbsp;&nbsp;");
+        buff.append("<a href=\"").append( mgrpath ).append("\">Manager</a>");
+        buff.append("<br/><br/>"); 
         buff.append("<table cellpadding=\"2\" cellspacing=\"0\">"); 
         buff.append("<tr>");
         buff.append("<th style=\"text-align:right; padding-right:10px;\">#</th>");

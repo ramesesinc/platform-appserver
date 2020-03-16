@@ -9,8 +9,10 @@
 
 package com.rameses.osiris3.core;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,9 +22,9 @@ import java.util.Map;
  */
 public abstract class ContextResource {
     
-    static class CacheTreeLocked {}
+    public static class CacheTreeLocked {}
     
-    private final CacheTreeLocked CACHE_LOCKED = new CacheTreeLocked(); 
+    protected final CacheTreeLocked CACHE_LOCKED = new CacheTreeLocked(); 
             
     protected OsirisServer server;
     protected AbstractContext context;
@@ -57,15 +59,24 @@ public abstract class ContextResource {
         }
     }
     
+    protected void afterRemove( String key ) {}
+    protected void afterRemoveAll() {}
+    
     public void remove(String key) {
         synchronized( CACHE_LOCKED ) {
+            if ( key == null || key.length() == 0 ) {
+                return; 
+            }
+
             resources.remove( key );
+            afterRemove( key ); 
         }
     }
     
     public void removeAll() {
         synchronized( CACHE_LOCKED ) {
             resources.clear();
+            afterRemoveAll();
         }
     }
 
