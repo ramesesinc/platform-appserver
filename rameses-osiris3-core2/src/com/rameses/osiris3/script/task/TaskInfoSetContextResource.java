@@ -28,6 +28,8 @@ import java.util.Set;
  */
 public class TaskInfoSetContextResource extends ContextResource  {
     
+    private final static String ENV_NAME = "scripts.tasks.enabled";
+    
     public void init() {
         //do nothing
     }
@@ -40,17 +42,29 @@ public class TaskInfoSetContextResource extends ContextResource  {
         TaskInfoSet taskInfoSet = new TaskInfoSet();
         try {
             final Set<String> list = new HashSet();
-            Enumeration<URL> e = context.getClassLoader().getResources("scripts/tasks");
-            if(e!=null) {
-                while(e.hasMoreElements()) {
-                    final URL parent = e.nextElement();
-                    URLDirectory dir = new URLDirectory(parent);
-                    dir.list( new URLFilter() {
-                        public boolean accept(URL u, String filter) {
-                            list.add( "tasks/"+ filter.substring(filter.lastIndexOf("/")+1)  );
-                            return false;
-                        }
-                    });
+            
+            Object env_value = System.getenv().get( ENV_NAME ); 
+            if ( env_value == null || env_value.toString().length() == 0 ) {
+                env_value = System.getProperties().get( ENV_NAME ); 
+            }
+            boolean enable_tasks = (
+                env_value == null ? true : (
+                    env_value.toString().matches("0|false") ? false : true 
+                )
+            ); 
+            if ( enable_tasks ) {
+                Enumeration<URL> e = context.getClassLoader().getResources("scripts/tasks");
+                if(e!=null) {
+                    while(e.hasMoreElements()) {
+                        final URL parent = e.nextElement();
+                        URLDirectory dir = new URLDirectory(parent);
+                        dir.list( new URLFilter() {
+                            public boolean accept(URL u, String filter) {
+                                list.add( "tasks/"+ filter.substring(filter.lastIndexOf("/")+1)  );
+                                return false;
+                            }
+                        });
+                    }
                 }
             }
             
@@ -83,7 +97,4 @@ public class TaskInfoSetContextResource extends ContextResource  {
             return taskInfoSet;
         }
     }
-
-
-    
 }

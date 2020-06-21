@@ -149,7 +149,7 @@ public class MsSqlDialect extends AbstractSqlDialect  {
                      .append( buildGroupByStatement( model ));
             } 
             buff.append(" * FROM ( ").append( union ).append(" )t0 ")
-                .append( buildOrderStatement( model, "" ));
+                .append( buildOrderStatement( model, "", true, true ));
         } 
 
         StringBuilder buff2 = new StringBuilder(); 
