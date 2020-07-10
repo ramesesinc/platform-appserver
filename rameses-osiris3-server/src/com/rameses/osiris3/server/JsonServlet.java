@@ -49,10 +49,14 @@ public class JsonServlet extends ServiceInvokerServlet {
         if(hreq.getMethod().equalsIgnoreCase("POST")) {
             InputStream is = hreq.getInputStream();
             if(is!=null) {
-                String s  = StreamUtil.toString(is);
-                if(s.trim().startsWith("[")) {
+                String s = StreamUtil.toString( is ).trim(); 
+                System.out.println("*** POST BODY ");
+                System.out.println( s );
+                if (s.length() == 0 ) {
+                    args = null; 
+                } else if(s.startsWith("[")) {
                     args = new Object[] { JsonUtil.toList(s) };
-                } else if(s.trim().startsWith("{")) {
+                } else if(s.startsWith("{")) {
                     args = new Object[] { JsonUtil.toMap(s) };
                 } else {
                     throw new RuntimeException("Post body not identified");

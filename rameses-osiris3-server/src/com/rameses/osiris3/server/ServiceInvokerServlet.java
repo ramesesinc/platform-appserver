@@ -145,7 +145,11 @@ public class ServiceInvokerServlet extends AbstractServlet {
             
             tr.setBypassAsync(false);
             tr.setMethodName(p.getMethodName());
-            tr.setArgs((Object[])params[0] );
+            if ( params[0] == null ) {
+                tr.setArgs(new Object[]{});
+            } else {
+                tr.setArgs((Object[])params[0] );
+            }
             tr.setEnv( (Map)params[1] );
             tr.setListener( listener );
             try {
