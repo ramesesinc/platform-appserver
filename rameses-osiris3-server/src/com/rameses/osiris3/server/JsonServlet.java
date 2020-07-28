@@ -18,9 +18,11 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,35 +46,65 @@ public class JsonServlet extends ServiceInvokerServlet {
     
     protected Object[] readRequest(HttpServletRequest hreq) throws IOException {
         this.hreq = hreq;
+        
         Object[] args = null;
+        Map env = new HashMap();
+        env.put("CLIENTTYPE", "json");
         
         if(hreq.getMethod().equalsIgnoreCase("POST")) {
             InputStream is = hreq.getInputStream();
-            if(is!=null) {
+            if (is != null) {
                 String s = StreamUtil.toString( is ).trim(); 
-                System.out.println("*** POST BODY ");
-                System.out.println( s );
                 if (s.length() == 0 ) {
                     args = null; 
-                } else if(s.startsWith("[")) {
+                } 
+                else if(s.startsWith("[")) {
                     args = new Object[] { JsonUtil.toList(s) };
-                } else if(s.startsWith("{")) {
-                    args = new Object[] { JsonUtil.toMap(s) };
-                } else {
+                } 
+                else if(s.startsWith("{")) {
+                    Map map = JsonUtil.toMap( s ); 
+                    if ( map.get("env") instanceof Map ) {
+                        env.putAll((Map) map.get("env"));  
+                    }
+                    
+                    if ( map.containsKey("args") && map.get("args") instanceof Map) {
+                        args = new Object[]{ map.get("args") };
+                    }
+                    else if ( map.containsKey("args") && map.get("args") instanceof Collection) {
+                        args = ((Collection) map.get("args")).toArray(); 
+                    }
+                    else if ( map.containsKey("args") && map.get("args") instanceof Object[]) {
+                        args = (Object[]) map.get("args");
+                    }
+                    else if ( map.containsKey("args") && map.get("args") != null) {
+                        args = new Object[]{ map.get("args") };
+                    }
+                    else if ( map.containsKey("args") && map.get("args") == null) {
+                        args = new Object[]{};
+                    }
+                    else {
+                        args = new Object[] { map };
+                    }
+                } 
+                else {
                     throw new RuntimeException("Post body not identified");
                 }
             }
-        } else {
+        } 
+        else {
             String _args = hreq.getParameter("args");
             if (_args != null && _args.trim().length() > 0) {
                 if (_args.startsWith("[")) {
                     args = JsonUtil.toObjectArray( _args );
-                } else if(_args.startsWith("{")) {
+                } 
+                else if(_args.startsWith("{")) {
                     args = new Object[]{JsonUtil.toMap( _args )};
-                } else {
+                } 
+                else {
                     throw new RuntimeException("args must be enclosed with []");
                 }
-            } else {
+            } 
+            else {
                 Map map = new HashMap();
                 Enumeration<String> en = hreq.getParameterNames();
                 while (en.hasMoreElements()) {
@@ -87,29 +119,31 @@ public class JsonServlet extends ServiceInvokerServlet {
                     }
                 }
                 
-                if (map.isEmpty())
+                if (map.isEmpty()) {
                     args = new Object[]{};
-                else
+                }
+                else {
                     args = new Object[]{map};
+                }
             }
         }
         
-        Map env = new HashMap();
-        env.put("CLIENTTYPE", "json");
         Enumeration<String> ss = hreq.getHeaderNames();
         while( ss.hasMoreElements() ) {
             String s2 = ss.nextElement();
             env.put( s2, hreq.getHeader(s2) );
         }
         
-         String _env = hreq.getParameter( "env" );
+        String _env = hreq.getParameter( "env" );
         if (_env != null && _env.trim().length() > 0) {
             if (!_env.startsWith("{"))
-                throw new RuntimeException("env must be enclosed with []");
+                throw new RuntimeException("env must be enclosed with {}");
             
             env.putAll( JsonUtil.toMap( _env ));
         }
         
+        System.out.println("env  -> "+ env);
+        System.out.println("args -> "+ args);
         return new Object[]{ args, env };
     }
     
@@ -148,8 +182,21 @@ public class JsonServlet extends ServiceInvokerServlet {
         } else {
             hres.setContentType("application/json");
             try {
-                hres.getWriter().println( JsonUtil.toString(response) );
-            } catch(Exception e) {
+                if ( response == null ) {
+                    hres.getWriter().println("{}");
+                }
+                else if ( response instanceof Throwable ) {
+                    Map map = new HashMap();
+                    map.put("error", ((Throwable) response).getMessage()); 
+                    hres.getWriter().println( JsonUtil.toString( map ) );
+                }
+                else if ( response instanceof Map || response instanceof List) {
+                    hres.getWriter().println( JsonUtil.toString( response ));
+                }
+                else {
+                    hres.getWriter().println( JsonUtil.toString( response ));
+                }
+            } catch(Throwable e) {
                 e.printStackTrace();
             }
         }
