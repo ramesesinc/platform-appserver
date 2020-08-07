@@ -18,4 +18,5 @@ import java.lang.annotation.Target;
 @Target(value=ElementType.FIELD)
 public @interface XConnection {
     String value() default "";
+    boolean dynamic() default false;
 }
