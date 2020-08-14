@@ -142,8 +142,6 @@ public class JsonServlet extends ServiceInvokerServlet {
             env.putAll( JsonUtil.toMap( _env ));
         }
         
-        System.out.println("env  -> "+ env);
-        System.out.println("args -> "+ args);
         return new Object[]{ args, env };
     }
     
@@ -182,19 +180,16 @@ public class JsonServlet extends ServiceInvokerServlet {
         } else {
             hres.setContentType("application/json");
             try {
-                if ( response == null ) {
+                if ( response == null || response.toString().equalsIgnoreCase("#NULL") ) {
                     hres.getWriter().println("{}");
                 }
                 else if ( response instanceof Throwable ) {
                     Map map = new HashMap();
                     map.put("error", ((Throwable) response).getMessage()); 
-                    hres.getWriter().println( JsonUtil.toString( map ) );
-                }
-                else if ( response instanceof Map || response instanceof List) {
-                    hres.getWriter().println( JsonUtil.toString( response ));
+                    hres.getWriter().println( new JSON().encode( map ) );
                 }
                 else {
-                    hres.getWriter().println( JsonUtil.toString( response ));
+                    hres.getWriter().println( new JSON().encode( response ));
                 }
             } catch(Throwable e) {
                 e.printStackTrace();
