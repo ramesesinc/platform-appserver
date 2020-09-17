@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.rmi.server.UID;
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.jetty.io.EofException;
 import org.eclipse.jetty.websocket.WebSocket;
 
 /**
@@ -89,13 +90,17 @@ public abstract class Channel
         }
                 
         public void send(MessageObject msgobj) throws IOException {
-            if (conn == null) return; 
-            
-            if (!(connid+"").equals(msgobj.getConnectionId())) { 
-                byte[] bytes = msgobj.encrypt(); 
-                conn.sendMessage(bytes, 0, bytes.length); 
+            try { 
+                if (conn == null) return; 
+
+                if (!(connid+"").equals(msgobj.getConnectionId())) { 
+                    byte[] bytes = msgobj.encrypt(); 
+                    conn.sendMessage(bytes, 0, bytes.length); 
+                }
+            } catch(EofException eof) {
+                //do nothing 
             }
-        }        
+        } 
         
         public void close(int status, String msg ) {
             if (conn == null) return;
