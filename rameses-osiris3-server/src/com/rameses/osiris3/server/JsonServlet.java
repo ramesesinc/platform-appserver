@@ -12,6 +12,7 @@ package com.rameses.osiris3.server;
 import com.rameses.common.MediaFile;
 import com.rameses.io.IOStream;
 import com.rameses.io.StreamUtil;
+import com.rameses.util.ExceptionManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -156,45 +157,51 @@ public class JsonServlet extends ServiceInvokerServlet {
             } catch(Exception ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             }
-            
-//            InputStream is = null;
-//            OutputStream os = null;
-//            try
-//            {
-//                os = new BufferedOutputStream(hres.getOutputStream());
-//                int i = 0;
-//                is = mf.getInputStream();
-//                while( (i=is.read())!=-1 ) {
-//                    os.write( i );
-//                }
-//                os.flush();
-//            }
-//            catch(Exception e) {
-//                e.printStackTrace();
-//            }
-//            finally
-//            {
-//                try {is.close();} catch(Exception ign){;}
-//                try {os.close();} catch(Exception ign){;}
-//            }
-        } else {
+        } 
+        else {
             hres.setContentType("application/json");
             try {
                 if ( response == null || response.toString().equalsIgnoreCase("#NULL") ) {
                     hres.getWriter().println("{}");
                 }
                 else if ( response instanceof Throwable ) {
-                    Map map = new HashMap();
-                    map.put("error", ((Throwable) response).getMessage()); 
+                    Map map = buildError((Throwable) response); 
                     hres.getWriter().println( new JSON().encode( map ) );
                 }
                 else {
                     hres.getWriter().println( new JSON().encode( response ));
                 }
-            } catch(Throwable e) {
+            } 
+            catch(Throwable e) {
                 e.printStackTrace();
+                
+                Map map = buildError( e ); 
+                try { 
+                    hres.getWriter().println( new JSON().encode( map ) );
+                }
+                catch(Throwable t) {
+                    System.out.println("[ERROR] "+ t.getMessage());
+                }
             }
         }
+    }
+    
+    private Map buildError( Throwable e ) {
+        Throwable cause = e;
+        while( cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+
+        Map map = new HashMap();
+        map.put("status", "ERROR");
+
+        String msg = cause.getMessage(); 
+        if ( msg == null ) { 
+            map.put("msg", cause.getClass().getName()); 
+        } else {
+            map.put("msg", msg); 
+        }
+        return map; 
     }
     
     private void write(HttpServletRequest hreq, HttpServletResponse hres, InputStream input) throws Exception {
