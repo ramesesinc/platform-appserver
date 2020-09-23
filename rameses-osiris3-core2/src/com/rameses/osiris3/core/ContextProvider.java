@@ -169,6 +169,11 @@ public abstract class ContextProvider {
             listPaths.add( path );
             
             ModuleFolder mf = appConf.getModuleFolder();
+            if ( mf.getSubUrl() != null ) {
+                listPaths.add( mf.getSubUrl().toString()); 
+            }
+            
+            //this is for the extended services (modules/ext) 
             List<URL> uus = mf.getPluginServices();
             for ( URL uu : uus ) {
                 listPaths.add( uu.toString()); 
@@ -195,8 +200,8 @@ public abstract class ContextProvider {
             } 
             return gc;
         } 
-        catch(Exception ign){
-            throw new RuntimeException("ERROR init classloader for "+ name +" "+ ign.getMessage());
+        catch(Throwable t){
+            throw new RuntimeException("ERROR init classloader for "+ name +" "+ t.getMessage());
         }
     }
 
