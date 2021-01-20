@@ -351,6 +351,9 @@ public abstract class AbstractSqlDialect implements SqlDialect {
         return buildOrderStatement( model, alias, true );
     }
     protected String buildOrderStatement( SqlDialectModel model, String alias, boolean withOrderByCommand  ) { 
+        return buildOrderStatement( model, alias, true, false );
+    }
+    protected String buildOrderStatement( SqlDialectModel model, String alias, boolean withOrderByCommand, boolean useExtendedFieldName  ) { 
         StringBuilder sb = new StringBuilder(); 
         if( model.getOrderFields()!=null &&  model.getOrderFields().size()>0 ) { 
             if ( withOrderByCommand ) sb.append( " ORDER BY "); 
@@ -359,16 +362,19 @@ public abstract class AbstractSqlDialect implements SqlDialect {
             for( Field f: model.getOrderFields() ) {
                 //if (f.isPrimary()) { continue; } 
                 
-                if(i++>0) sb.append(",");
-                if( ValueUtil.isEmpty(f.getExpr()) ) { 
+                if ( i++ > 0 ) sb.append(",");
+                if ( ValueUtil.isEmpty(f.getExpr()) ) { 
                     String preferredAlias = f.getTablealias(); 
                     if ( alias != null ) preferredAlias = alias.trim(); 
 
                     if ( preferredAlias != null && preferredAlias.length()>0 ) {
                         sb.append( getDelimiters()[0]+preferredAlias+getDelimiters()[1]+"." );
                     } 
-                    sb.append( getDelimiters()[0]+f.getFieldname()+getDelimiters()[1] );
-                } else {
+                    sb.append( getDelimiters()[0] ); 
+                    sb.append( useExtendedFieldName ? f.getExtendedName() : f.getFieldname()); 
+                    sb.append( getDelimiters()[1] ); 
+                } 
+                else {
                     sb.append( fixStatement(model, f.getExpr(), true) );
                 } 
                 sb.append( " " + f.getSortDirection() );
@@ -424,7 +430,7 @@ public abstract class AbstractSqlDialect implements SqlDialect {
             
             sb.append(" SELECT * FROM ( ").append( buff ).append(" )t1 ");
             if ( includeOrderBy ) { 
-              sb.append( buildOrderStatement( model, "" )); 
+              sb.append( buildOrderStatement( model, "", true, true )); 
             } 
             
         } else { 

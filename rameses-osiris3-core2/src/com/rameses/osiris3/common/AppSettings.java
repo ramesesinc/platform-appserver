@@ -149,7 +149,7 @@ public final class AppSettings {
         }
         
         public ModuleFolder getModuleFolder() {
-            ModuleFolder mf = new ModuleFolder( getURL("modules")); 
+            ModuleFolder mf = new ModuleFolder( getURL("modules"), getURL("plugins")); 
             mf.setModuleExtDir( getModuleExtDir()); 
             return mf; 
         }

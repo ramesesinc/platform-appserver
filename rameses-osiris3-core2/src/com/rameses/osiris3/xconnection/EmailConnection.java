@@ -13,13 +13,18 @@ import com.rameses.osiris3.core.AbstractContext;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.LinkedBlockingQueue;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.BodyPart;
 import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
+import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 
 /**
  *
@@ -32,8 +37,6 @@ public class EmailConnection extends XConnection {
     private String name;
     private Session session;
     
-    private LinkedBlockingQueue queue = new LinkedBlockingQueue();
-    
     public EmailConnection(String name, AbstractContext ctx, Map conf) {
         this.conf = conf;
         this.ctx = ctx;
@@ -41,37 +44,11 @@ public class EmailConnection extends XConnection {
     }
     
     public void start() {
-        Properties props = new Properties();
-        final String username = (String)conf.remove("mail.username");
-        final String password = (String)conf.remove("mail.password");
-        
-        for( Object om: conf.entrySet() ) {
-            Map.Entry me = (Map.Entry)om;
-            props.put( me.getKey(), (me.getValue()+"").trim() );
-        }
-        
-        if(!props.containsKey("mail.smtp.auth")) {
-            props.put("mail.smtp.auth","true");
-        }
-        if(!props.containsKey("mail.smtp.starttls.enable")) {
-            props.put("mail.smtp.starttls.enable","true");
-        }
-        session = Session.getInstance(props,
-            new javax.mail.Authenticator() {
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(username, password);
-                }
-            });
-            
-        String debug = props.getProperty("mail.debug");    
-        if( "true".equals(debug) ) {
-            session.setDebug( true );
-            session.setDebugOut( System.out );    
-        }
+        //System.out.println("startng email service ");
     }
     
     public void stop() {
-        System.out.println("stopping email service ->"+this.name);
+        //System.out.println("stopping email service ->"+this.name);
     }
     
     public Map getConf() {
@@ -79,34 +56,65 @@ public class EmailConnection extends XConnection {
     }
     
     public void send( Map msg ) throws Exception  {
-        try {
-            String from = (String)msg.get("from");
-            if(from == null ) from = (String)conf.get("mail.from");
-            String subject = (String) msg.get("subject");
-            String message = (String)msg.get("message");
-            
-            List<String> recipients = (List)msg.get("recipients");
-            if(recipients==null)
-                throw new Exception("XEmailConnection error. Please provide recipients. list of strings");
-            
-            Message m = new MimeMessage(session);
-            if(from!=null) {
-                InternetAddress addressFrom = new InternetAddress(from);
-                m.setFrom(addressFrom);
+
+        try { 
+            String to = (String)msg.get("to");
+            if( to ==null || to.trim().length() == 0 ) {
+                throw new Exception("to - Message Receipint is require in mail");
             }
-            InternetAddress[] addressTo = new InternetAddress[recipients.size()];
-            for (int i = 0; i < recipients.size(); i++) {
-                addressTo[i] = new InternetAddress(recipients.get(i));
+            
+            Properties properties = new Properties();
+            properties.putAll( conf );
+            
+            if( properties.containsKey("debug")) {
+                properties.setProperty("mail.debug", properties.get("mail.debug").toString() );                
             }
-            m.setRecipients(Message.RecipientType.TO, addressTo);
             
-            if(subject!=null) m.setSubject(subject);
-            m.setContent(message, "text/html");
+            Session session = Session.getDefaultInstance( properties );   
+            MimeMessage message = new MimeMessage(session);  
+
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+            if(msg.containsKey("subject")) {
+                String subject = (String)msg.get("subject");
+                message.setSubject(subject);
+            }
             
-            Transport.send(m);
-        } catch(Exception e) {
+            String msgText = (String)msg.get("message");
+            
+            List<Map> attachments = (List)msg.get("attachments");
+            
+            if ( attachments!=null && attachments.size() > 0 ) {
+                Multipart multipart = new MimeMultipart();
+                BodyPart messageBodyPart = new MimeBodyPart();
+                messageBodyPart.setContent( (msgText==null?"":msgText),"text/html");
+                multipart.addBodyPart(messageBodyPart);
+                for( Map file : attachments ) {
+                    messageBodyPart = new MimeBodyPart();
+                    String filename = (String)file.get("filename");
+                    if( filename ==null) throw new Exception("attachment must have a filename");
+                    String title = (String)file.get("title");
+                    if(title==null) title = filename;
+                    DataSource source = new FileDataSource(filename);
+                    messageBodyPart.setDataHandler(new DataHandler(source));
+                    messageBodyPart.setFileName(title);
+                    multipart.addBodyPart(messageBodyPart);
+                }
+                message.setContent(multipart); 
+            } 
+            else if ( msgText != null ) { 
+                message.setContent(msgText, "text/html");
+            }
+            Transport.send(message);
+        } 
+        catch (RuntimeException re) { 
+            re.printStackTrace();
+            throw re;  
+        } 
+        catch (Exception e) {  
             e.printStackTrace();
-        }
+            throw e; 
+        } 
+    
     }
     
 }

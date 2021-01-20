@@ -8,10 +8,13 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -21,6 +24,9 @@ public class ModuleFolder {
     
     private URL url;
     private URI uri;
+    
+    private URL subUrl;
+    private URI subUri;
     
     private File[] moduleExtDirs;
     
@@ -37,8 +43,15 @@ public class ModuleFolder {
     }
     
     public ModuleFolder( URL url ) {
+        this( url, null ); 
+    }
+    
+    public ModuleFolder( URL url, URL subUrl ) {
         this.url = url;
         this.uri = (url == null ? null : toURI(url)); 
+        
+        this.subUrl = subUrl;
+        this.subUri = (subUrl == null ? null : toURI( subUrl)); 
     }
     
     public boolean exist() {
@@ -51,6 +64,10 @@ public class ModuleFolder {
         } finally {
             try { inp.close(); }catch(Throwable t){;} 
         }
+    }
+    
+    public URL getSubUrl() {
+        return subUrl; 
     }
     
     public List<URL> getServices() {
@@ -74,7 +91,7 @@ public class ModuleFolder {
                 }
             }
         }
-        
+                
         if ( urls.isEmpty()) {
             return urls;
         }
@@ -223,8 +240,9 @@ public class ModuleFolder {
     }
     
     private class DefaultServiceFilter implements Filter {
+        
         public boolean accept(URL url, String name) {
-            return ( name.endsWith(".jar") || name.endsWith(".jar/"));
+            return ( name.endsWith(".jar") || name.endsWith(".jar/")); 
         }
     }
 
