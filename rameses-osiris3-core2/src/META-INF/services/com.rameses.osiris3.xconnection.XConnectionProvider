@@ -4,3 +4,4 @@ com.rameses.osiris3.xconnection.EmailConnectionProvider
 com.rameses.osiris3.xconnection.FileConnectionProvider
 com.rameses.osiris3.xconnection.XAsyncConnectionProvider
 com.rameses.osiris3.xconnection.XConnectionFactoryProvider
+com.rameses.osiris3.xconnection.ConfConnectionProvider
